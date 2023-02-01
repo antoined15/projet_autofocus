@@ -1,3 +1,13 @@
+#Camera Autofocus project : FIP-EII-2A Telecom Physique Strasbourg 2022-2023
+
+#Authors :
+#   - DOTTE Antoine
+#   - JENNY Thibaud
+#   - FISCHER Arnaud
+
+#Date : 01/02/2023
+
+
 
 import numpy as np
 import cv2
@@ -7,63 +17,64 @@ import math
 cap = cv2.VideoCapture(0)
 
 
-def  matrice_normalisation(rotated_points, X_value_wanted,Y_value_wanted): #fonction qui permet de normaliser la matrice pour placer les symboles dans une matrice de taille X_value_wanted*Y_value_wanted
-    normalised_points_x = [point[0] for point in rotated_points]
-    normalised_points_y = [point[1] for point in rotated_points]
+def  matrice_normalisation(matrice, X_value, Y_value): #fonction qui permet de normaliser la matrice pour placer les symboles dans une matrice de taille X_value_wanted*Y_value_wanted 
+#MARCHE
+    normalised_points_x = [point[0] for point in matrice]
+    normalised_points_y = [point[1] for point in matrice]
 
     min_x = np.min(normalised_points_x)
     min_y = np.min(normalised_points_y)
     max_x = np.max(normalised_points_x)
     max_y = np.max(normalised_points_y)
 
-    normalised_points_x = ((normalised_points_x - min_x)/(max_x - min_x)) * (X_value_wanted-1) #on normalise les coordonnées des points pour qu'ils soient compris entre 0 et 15
-    normalised_points_y = ((normalised_points_y - min_y)/(max_y - min_y)) * (Y_value_wanted-1) ##on normalise les coordonnées des points pour qu'ils soient compris entre 0 et 15
+    normalised_points_x = ((normalised_points_x - min_x)/(max_x - min_x)) * (X_value-1) #on normalise les coordonnées des points pour qu'ils soient compris entre 0 et 15
+    normalised_points_y = ((normalised_points_y - min_y)/(max_y - min_y)) * (Y_value-1) ##on normalise les coordonnées des points pour qu'ils soient compris entre 0 et 15
 
     normalised_points = np.transpose(np.array([normalised_points_x, normalised_points_y]))
     return normalised_points
 
 
-def matrice_rotation(angle, mean_x, mean_y, points): #fonction qui permet de tourner la matrice de symbole pour qu'elle soit bien orientée en fonction de l'angle de la mire détecté
-
+def matrice_rotation(angle, mean_x, mean_y, matrice): #fonction qui permet de tourner la matrice de symbole pour qu'elle soit bien orientée en fonction de l'angle de la mire détecté
+#MARCHE
     angle_rad = math.radians(-angle) #on convertit l'angle en radians
     rotation_matrix = np.array([[math.cos(angle_rad), -math.sin(angle_rad)], [math.sin(angle_rad), math.cos(angle_rad)]]) #on crée la matrice de rotation
     centre_matrix = np.array([mean_x, mean_y])
     rotated_matrice = []
-    for point in good_points:
+    for point in matrice:
         points = point - centre_matrix
         rotated_point = np.dot(rotation_matrix, points)
         rotated_matrice.append(rotated_point)
     return rotated_matrice
 
 
-def matrice_found_rgb_show(matrice_symb_rgb, matrice_symb): #transforme la matrice numérique en matrice couleur
-
+def matrice_found_rgb_show(matrice, X_value, Y_value): #transforme la matrice numérique en matrice couleur
+#MARCHE
+    matrice_rgb = np.zeros((X_value, Y_value, 3), dtype=np.uint8)
     colors = [(0, 0, 0), (0, 0, 255), (255,0 , 0)]
-
-    for i in range(15):
-        for j in range(15):
+    for i in range(X_value):
+        for j in range(Y_value):
             try : 
-                matrice_symb_rgb[j, i] = colors[matrice_symb[i, j]]
+                matrice_rgb[j, i] = colors[matrice[i, j]]
             except:
-                matrice_symb_rgb[i, j] = (0, 0, 0)
-    matrice_symb_rgb = cv2.resize(matrice_symb_rgb, (400, 400), cv2.INTER_LINEAR)
-    cv2.imshow('matrice des symboles détectés', matrice_symb_rgb) #on affiche la matrice de symbole
-  
+                matrice_rgb[i, j] = (0, 0, 0)
+    matrice_rgb = cv2.resize(matrice_rgb, (400, 400), cv2.INTER_LINEAR)
+    cv2.imshow('matrice des symboles détectés', matrice_rgb) #on affiche la matrice de symbole
 
 
-def variance_of_image_blur_laplacian(image): 
+def variance_of_image_blur_laplacian(image): #MARCHE
 	# compute the Laplacian of the image and then return the focus
 	return round(cv2.Laplacian(image, cv2.CV_64F).var(), 2)
 
-def variance_of_image_blur_sobel(image):
+def variance_of_image_blur_sobel(image):#MARCHE
 	# compute the Sobel of the image and then return the focus
 	return round(cv2.Sobel(image,cv2.CV_64F,1,0,ksize=3 ).var(), 1)
 
-def variance_of_image_blur_Canny(image):
+def variance_of_image_blur_Canny(image):#MARCHE
 	# compute the Canny of the image and then return the focus
 	return round(cv2.Canny(image, 100, 200).var(), 1)
 
 def symbole_identique_2_matrices(matrice1, matrice2): #calcule le nombre de symboles identiques entre deux matrices pour la même position
+    #MARCHE mais à améliorer, pas pertient
     symbole_validated = 0
     for i in range(15):
         for j in range(15):
@@ -71,10 +82,8 @@ def symbole_identique_2_matrices(matrice1, matrice2): #calcule le nombre de symb
                 symbole_validated = symbole_validated + 1
     return round(100 * symbole_validated/225, 3)
 
-
-
-
 def symbole_identique_2_matrices_V2(matrice1, matrice2): #calcule le nombre de symboles identiques entre deux matrices pour la même position
+    #MARCHE mais à améliorer, pas pertient
     #matrice de taille 15x15
     matrice_mire_avec_zéros = np.zeros((15,15))
     symbole_validated = 0
@@ -96,6 +105,7 @@ def symbole_identique_2_matrices_V2(matrice1, matrice2): #calcule le nombre de s
 
 
 def symbole_identique_2_matrices_V3(matrice1, matrice2): #calcul de l'erreur quadratique moyenne entre deux matrices, mais marche pas mieux que les autres
+    #MARCHE mais à améliorer, pas pertient
     h, w = np.array(matrice1).shape
     diff = matrice1 - matrice2
     err = np.sum(diff**2)
@@ -104,7 +114,7 @@ def symbole_identique_2_matrices_V3(matrice1, matrice2): #calcul de l'erreur qua
 
 
 def comparison_mire(real_mire, matrice_symb): #fonction globale pour comparer la mire originelle avec la mire potentielle trouvée
-
+    #MARCHE mais à améliorer
     symbole_found = np.count_nonzero(np.array(matrice_symb))
     pourcent_symb_detect = round(100 * symbole_found/225, 3)
     print("Pourcentage de symboles détectés : ", pourcent_symb_detect, "%")
@@ -145,8 +155,9 @@ def comparison_mire(real_mire, matrice_symb): #fonction globale pour comparer la
 #faire une image avec opencv pour voir ce que la matrice renvoie avec des ronds de couleur par exemple
 
 
+###################################################################################################################################################################################################################################################
 
-mode =  1 #si 0, on garde les mêmes coordonnées pour la mire. Si 1, on met à jours en temps réel 
+mode =  1 #si 0, on garde les mêmes coordonnées pour la mire. Si 1, on met à jours en temps réel : change en appuyant sur la touche "q"
 box_2 = [[0, 0], [0, 0], [0, 0], [0, 0]] #coordonnées de la boite englobante de la mire
 
 
@@ -168,11 +179,18 @@ while True:
             [2,1,2,1,1,2,1,1,2,1,2,2,1,2,2],
             [2,2,2,2,1,2,1,2,1,1,2,1,2,2,2]]
 
-
+    X_value_wanted = 15 #on veut une matrice de 15x15
+    Y_value_wanted = 15
+    n = 0 #variable d'incrémetation
+    long = 0 #longueur du symbole, sera utilisé pour la normalisation de la mire
+    matrice_symb = np.zeros((15, 15), dtype=int) #on crée une matrice de 15x15 --> taille de la mire qui contiendra les symboles détectés
+    matrice_symbole_x = [] #contient les coordonnées x des symboles de la mire trouvés
+    matrice_symbole_y = [] #contient les coordonnées y des symboles de la mire trouvés
+    matrice_symbole_type = [] #contient le type de symbole (1 = trait, 2 = cercle) trouvés
 
     #LIGNE CODE DEBUT************************************************************************************************************************************************************************************
     ret, frame = cap.read() #prendre une image
-    matrice_symb_rgb = np.zeros((15, 15, 3), dtype=np.uint8)
+
     #creation des images de travail
     frame_orig  = frame.copy() #copier l'image pour pouvoir la réutiliser pour la mire avec le masque
     frame_symb_only = cv2.cvtColor(np.full(frame.shape[:2], 0, dtype=np.uint8), cv2.COLOR_GRAY2RGB) #création d'une image noire sur laquelle sera intercallée les symboles détectés
@@ -183,16 +201,8 @@ while True:
     canny_image = cv2.Canny(frame, 50,150) #Appliquer un filtre de Canny pour détecter les contours
     contours, _ = cv2.findContours(canny_image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) #trouver les contours de l'image avec le filtre de Canny
     canny_image_cont = cv2.cvtColor(canny_image, cv2.COLOR_GRAY2RGB) #convertir en couleur pour pouvoir afficher les contours en couleur --> frame avec contours
-    cv2.imshow('contours', canny_image_cont) #on affiche l'image avec les contours
+    cv2.imshow('Contours', canny_image_cont) #on affiche l'image avec les contours
     
-
-  
-    n = 0 #variable d'incrémetation
-    long = 0 #longueur du symbole, sera utilisé pour la normalisation de la mire
-    matrice_symb = np.zeros((15, 15), dtype=int) #on crée une matrice de 15x15 --> taille de la mire qui contiendra les symboles détectés
-    matrice_symbole_x = [] #contient les coordonnées x des symboles de la mire trouvés
-    matrice_symbole_y = [] #contient les coordonnées y des symboles de la mire trouvés
-    matrice_symbole_type = [] #contient le type de symbole (1 = trait, 2 = cercle) trouvés
 
     #DETECTION DES CERCLES ************************************************************************************************************************************************************************************
     for cnt in contours:    
@@ -204,17 +214,12 @@ while True:
             if ratio == 1:  #détection des cercles : on considère que c'est des carrés parfaits donc ratio = 1 (plus facile à détecter que des cercles eux mêmes)
                 box = np.int0(cv2.boxPoints(rect))
                 
-
-
                 long = max(w, h) + long #longueur du symbole
                 matrice_symbole_x.append(int(x)) #ajout de la coordonnée x du symbole dans la matrice des coordonnées x des symboles
                 matrice_symbole_y.append(int(y)) #ajout de la coordonnée y du symbole dans la matrice des coordonnées y des symboles
                 matrice_symbole_type.append(2) #ajout du type du symbole dans la matrice des types des symboles
                 
-                cv2.circle(frame_symb_only, (int(x), int(y)), int(min(w/2,h/2)), (255,0,0), 2) #dessiner un cercle sur l'image des symboles détectés
-
-                
-                
+                cv2.circle(frame_symb_only, (int(x), int(y)), int(min(w/2,h/2)), (255,0,0), 2) #dessiner un cercle sur l'image des symboles détectés              
                 n = n+1
     if n>0:
         long_trait_max = long/n #calcul de la longueur moyenne des traits de la mire
@@ -309,26 +314,22 @@ while True:
    
         #CREATION DE LA MATRICE SYMBOLE CORRESPONDANT A LA MIRE ET AUX BONS SYMBOLES*******************************************************************************************************************************
 
-            #matrice de rotation des symboles 
     if len(good_points_et_type) >=15: #si il y a des symboles
         if box is not None: #si la mire est détectée
-            rotated_points = matrice_rotation(angle, mean_x, mean_y, good_points)
-        #normalisation de la matrice de symbole car on obtient une matrice de 15x15
 
-        X_value_wanted = 15 #on veut une matrice de 15x15
-        Y_value_wanted = 15
-        normalised_points = matrice_normalisation(rotated_points, X_value_wanted, Y_value_wanted)
+            rotated_points = matrice_rotation(angle, mean_x, mean_y, good_points) #rotation de la matrice contenant les coordonnées des symboles
+            normalised_points = matrice_normalisation(rotated_points, X_value_wanted, Y_value_wanted) #normalisation de la matrice contenant les coordonnées des symboles
+
         i=0
         for x, y in normalised_points:
-            matrice_symb[round(x)][round(y)] = good_points_et_type[i, 2] #on met un 1 dans la matrice de symbole
+            matrice_symb[round(x)][round(y)] = good_points_et_type[i, 2] #on qmet les symboles dans la nouvelle matrice normalisée et rotationnée
             i+=1 
         rotation_probable = comparison_mire(mire_reel, matrice_symb)
         cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + angle), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)    
     #LIGNE CODE FIN************************************************************************************************************************************************************************************ 
-    #Affiche l'image'
+ 
 
-
-    matrice_found_rgb_show(matrice_symb_rgb, matrice_symb) # transforme la matrice symbole en image RGB et l'affiche
+    matrice_found_rgb_show(matrice_symb, X_value_wanted, Y_value_wanted) # transforme la matrice symbole en image RGB et l'affiche
     cv2.imshow('frame', frame) #on affiche l'image de base
     cv2.imshow('frame_symb_only', frame_symb_only) #on affiche l'image avec les symboles
     cv2.imshow('mire', mire) #on affiche la mire
