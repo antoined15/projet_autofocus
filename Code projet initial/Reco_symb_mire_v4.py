@@ -190,7 +190,7 @@ while True:
 
     #LIGNE CODE DEBUT************************************************************************************************************************************************************************************
     ret, frame = cap.read() #prendre une image
-
+    cv2.imshow('frame', frame) #on affiche l'image de base
     #creation des images de travail
     frame_orig  = frame.copy() #copier l'image pour pouvoir la réutiliser pour la mire avec le masque
     frame_symb_only = cv2.cvtColor(np.full(frame.shape[:2], 0, dtype=np.uint8), cv2.COLOR_GRAY2RGB) #création d'une image noire sur laquelle sera intercallée les symboles détectés
@@ -253,6 +253,7 @@ while True:
     if points.size != 0: #si il y a des symboles détectés
         mean = np.mean(points, axis=0) #calcul de la moyenne des coordonnées des symboles
         distance = np.linalg.norm(points - mean, axis=1) #calcul de la distance entre chaque point et la moyenne
+        print(distance)
         good_points_et_type = points_et_type[distance < treshold] #on garde les points qui sont à moins de la distance treshold de la moyenne
         good_points = points[distance < treshold] 
 
@@ -261,7 +262,7 @@ while True:
             cv2.polylines(frame, [hull], True, (0,255,0), 2) # dessiner le polygone convexe correspondant à la mire
             cv2.polylines(frame_symb_only, [hull], True, (0,255,0), 2) # dessiner le polygone convexe correspondant à la mire
             
-            #dessiner le rectangle minimum qui englobe les points de contour
+            #dessiner le rectangle minimum qui englobe les points de cqqqqontour
             rect = cv2.minAreaRect(good_points) 
             width_rectangle_mire, height_rectangle_mire = rect[1]
             box = np.int0(cv2.boxPoints(rect))
@@ -330,7 +331,7 @@ while True:
  
 
     matrice_found_rgb_show(matrice_symb, X_value_wanted, Y_value_wanted) # transforme la matrice symbole en image RGB et l'affiche
-    cv2.imshow('frame', frame) #on affiche l'image de base
+
     cv2.imshow('frame_symb_only', frame_symb_only) #on affiche l'image avec les symboles
     cv2.imshow('mire', mire) #on affiche la mire
 
