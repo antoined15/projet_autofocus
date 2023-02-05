@@ -6,19 +6,19 @@ import cv2
 
 ########INPUTS################################################################################
 Vmin_moteur_autofocus = 0
-Vmax_moteur_autofocus = 50
+Vmax_moteur_autofocus = 30
 pas_focus = 10
 
 color_frame = (0, 255, 0) #couleur du texte affiché sur l'image (vert)
 taille_text_frame = 0.5 #taille du texte affiché sur l'image
 
-
-
 cap = cv2.VideoCapture(0)
 
 nbre_image_moy_mesure = 20 #chaque résultat de mesure est la moyenne de nbre_image_moy_mesure images
+Position_tourelle = [[0, 0], [0, 45], [45, 45]]#, [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
 
-Position_tourelle = [[0, 0], [0, 45], [45, 45], [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
+
+
 
 ########MAIN################################################################################
 
@@ -49,61 +49,69 @@ for pos_T in Position_tourelle:
 	
 	#on cherche la position de la mire qui a le plus grand nombre de symboles
 	best_index = bestnbr_symbole_by_pos.index(max(bestnbr_symbole_by_pos))
-	print("best index : ", best_index)
 	best_focus = best_focus_by_pos[best_index]
 	bestnbr_symbole = bestnbr_symbole_by_pos[best_index]
 	best_angle = best_angle_by_pos[best_index]
 	best_box = best_box_by_pos[best_index]
 	best_mean_X = best_mean_X_by_pos[best_index]
 	best_mean_Y = best_mean_Y_by_pos[best_index]
-	print("best focus : ", best_focus)
-	print("best nbr symbole : ", bestnbr_symbole)
-	print("best angle : ", best_angle)
-	print("best box : ", best_box)
-	print("best mean X : ", best_mean_X)
-	print("best mean Y : ", best_mean_Y)
 
+	print("Meilleure position autofocus trouvé : ", best_focus)
+	print("Mire en position : ", best_mean_X, ";", best_mean_Y)
 
 	cv2.destroyWindow('Contours & mire') #on ferme la fenêtre des contours
 
-	#ON MET LE MASQUE SUR LA MIRE TROUVEE
+	#GRAPHES
+	fig = plt.figure()
+	
+	titre = "Recherche mire --> position de la tourelle : " + str(pos_T[0]) + ";" + str(pos_T[1])
+	plt.plot(best_focus_by_pos, bestnbr_symbole_by_pos)
+	plt.plot(best_focus, bestnbr_symbole, 'ro')
+	plt.annotate("meilleure position \n du moteur autofocus", (best_focus, bestnbr_symbole), textcoords="offset points", xytext=(-0,-20),fontsize = 5, color = 'red',  ha='center')
+	plt.grid()
+	plt.xlabel('Position du moteur autofocus')
+	plt.ylabel('Nombre de symboles détectés')
+	plt.title(titre)
+	plt.show(block = False)
 
 
 	if best_mean_X ==0 or best_mean_Y == 0: #si la mire n'a pas été trouvée, envoie une erreur
 		print("erreur : mire non trouvée")
 	else:
-		
+		sobel = []
+		laplacian = []
+		canny = []
+		moyenne_fm = []
+		posit_M = []
 
 		for pos_M in range(Vmin_moteur_autofocus, Vmax_moteur_autofocus + pas_focus, pas_focus): #Calcul de la valeur de flou uniquement sur l'image de la mire
+			
+			fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_moyenne_moy = fct.variance_of_image_blur_moyenne(cap,best_box, nbre_image_moy_mesure, color_frame, taille_text_frame, pos_T, pos_M)
+			sobel.append(fm_sobel_moy)
+			laplacian.append(fm_laplacian_moy)
+			canny.append(fm_canny_moy)
+			moyenne_fm.append(fm_moyenne_moy)
+			posit_M.append(pos_M)
+
 	
-			for i in range(nbre_image_moy_mesure):
-				ret, frame = cap.read() #prendre une image
-				mire_masque = fct.img_masque_mire(frame, best_box)
-
-				gray_mire = cv2.cvtColor(mire_masque, cv2.COLOR_BGR2GRAY)
-				fm_sobel = int(fct.variance_of_image_blur_sobel(gray_mire))
-				fm_laplacian = int(fct.variance_of_image_blur_laplacian(gray_mire))
-				fm_canny = int(fct.variance_of_image_blur_Canny(gray_mire))
-
-
-				cv2.putText(frame, "{}{}{}{}".format(" Position de la tourelle :  ",pos_T[0],";", pos_T[1]), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)  
-				cv2.putText(frame, "{}".format(" Position de la mire trouvee, calcul du flou"), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)  
-				cv2.putText(frame, "{}{}".format(" Position du moteur autofocus :  ",pos_M), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA) 
-				cv2.putText(frame, "{}{}".format(" Valeur de flou de la mire avec Sobel : ", fm_sobel), (0, 80), cv2.FONT_HERSHEY_SIMPLEX,taille_text_frame, color_frame, 1, cv2.LINE_AA)
-				cv2.putText(frame, "{}{}".format(" Valeur de flou de la mire avec Laplace : ", fm_laplacian), (0, 100), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
-				cv2.putText(frame, "{}{}".format(" Valeur de flou de la mire avec Canny : ", fm_canny), (0, 120), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
-				cv2.putText(frame, "{}{}".format(" Moyenne des valeurs de flou : ", int((fm_sobel+fm_laplacian+fm_canny)/3)), (0, 140), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
-
-
-				cv2.imshow('frame', frame) #on affiche l'image de base
-				if cv2.waitKey(1) == ord('q'):
-					break #si q est appuyé, on quitte la boucle
+		fig = plt.figure()
+		#GRAPHES
+		titre = "Calcul flou --> position de la tourelle : " + str(pos_T[0]) + ";" + str(pos_T[1])
+		plt.plot(posit_M, sobel, label = 'sobel')
+		plt.plot(posit_M, laplacian, label = 'laplacian')
+		plt.plot(posit_M, canny, label = 'canny')
+		plt.plot(posit_M, moyenne_fm, label = 'moyenne')
+		plt.legend()
+		plt.grid()
+		plt.xlabel('Position du moteur autofocus')
+		plt.ylabel('Valeur de flou')
+		plt.title(titre)
+		plt.show(block = False)
 
 		cv2.destroyWindow('mire') #on ferme la fenêtre des contours
-
 
 cap.release()
 cv2.destroyAllWindows()
 
-
+plt.show()
 #FAIRE GRAPHES MATPLOTLIB

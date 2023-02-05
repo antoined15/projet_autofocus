@@ -4,6 +4,9 @@ import numpy as np
 import random
 import cv2
 
+
+
+
 def position_tourelle(X, Y):
 	#envoi sur le port série de la position demandée
 	#attente que le déplacement soit terminé
@@ -142,7 +145,6 @@ def nbre_symboles_mire_detectes(frame) :
 
 		if len(matrice_symb_MIRE[0]) >=15: #si on a détecté au moins 15 symboles, on a trouvé la mire
 			mean_X_mire, mean_Y_mire, angle, box_mire = position_angle_mire(matrice_symb_MIRE, canny_image_cont)
-		
 	cv2.imshow('Contours & mire', canny_image_cont) #on affiche l'image avec les contours, les symboles et le rectangle englobant la mire 
 
 	return (len(matrice_symb_MIRE[0])), box_mire, mean_X_mire, mean_Y_mire, angle
@@ -193,6 +195,7 @@ def img_masque_mire(frame, box_mire):
 	mire = np.full(frame.shape[:2], 0, dtype=np.uint8) #création d'une image noire sauf à l'endroit de la mire pour le calcul de la variance de l'image
 	cv2.fillConvexPoly(mire, box_mire,255) #on remplit la mire avec du blanc
 	mire = cv2.bitwise_and(frame, frame, mask=mire) #on applique la mire sur l'image de départ
+
 	cv2.imshow('mire', mire) #on affiche la mire masquée
 
 	return mire
@@ -210,3 +213,74 @@ def variance_of_image_blur_sobel(image):#MARCHE
 def variance_of_image_blur_Canny(image):#MARCHE
 	# compute the Canny of the image and then return the focus
 	return round(cv2.Canny(image, 100, 200).var(), 1)
+
+
+
+
+
+
+def variance_of_image_blur(frame,best_box, color_frame, taille_text_frame, pos_T, pos_M):
+
+	mire_masque = img_masque_mire(frame, best_box) 	#ON MET LE MASQUE SUR LA MIRE TROUVEE
+
+
+	gray_mire = cv2.cvtColor(mire_masque, cv2.COLOR_BGR2GRAY)
+	fm_sobel = int(variance_of_image_blur_sobel(gray_mire))
+	fm_laplacian = int(variance_of_image_blur_laplacian(gray_mire))
+	fm_canny = int(variance_of_image_blur_Canny(gray_mire))
+
+	mean_focus_value = int((fm_sobel+fm_laplacian+fm_canny)/3)
+
+
+
+
+
+
+	return fm_sobel, fm_laplacian, fm_canny, mean_focus_value
+
+
+
+
+
+
+def variance_of_image_blur_moyenne(cap,best_box, nbr_mesures, color_frame, taille_text_frame, pos_T, pos_M):
+
+	focus_sobel_tab = []
+	focus_laplacian_tab = []
+	focus_canny_tab = []
+	focus_moyenne_tab = []
+	fm_sobel_moy = 0
+	fm_laplacian_moy = 0
+	fm_canny_moy = 0
+	fm_moyenne_moy = 0
+
+	for i in range(nbr_mesures):
+		ret, frame = cap.read() #prendre une image
+
+		fm_sobel, fm_laplacian, fm_canny, mean_focus_value = variance_of_image_blur(frame, best_box,color_frame, taille_text_frame, pos_T, pos_M)
+
+		cv2.putText(frame, "{}{}{}{}".format(" Position de la tourelle :  ",pos_T[0],";", pos_T[1]), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)  
+		cv2.putText(frame, "{}".format(" Position de la mire trouvee, calcul du flou"), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA) 
+		cv2.putText(frame, "{}{}{}{}".format(" Prise d'image : ", i, "/", nbr_mesures), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
+		cv2.putText(frame, "{}{}".format(" Position du moteur autofocus :  ",pos_M), (0, 80), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
+		cv2.putText(frame, "{}{}".format(" Valeur de flou de la mire avec Sobel : ", fm_sobel), (0, 100), cv2.FONT_HERSHEY_SIMPLEX,taille_text_frame, color_frame, 1, cv2.LINE_AA)
+		cv2.putText(frame, "{}{}".format(" Valeur de flou de la mire avec Laplace : ", fm_laplacian), (0, 120), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
+		cv2.putText(frame, "{}{}".format(" Valeur de flou de la mire avec Canny : ", fm_canny), (0, 140), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
+		cv2.putText(frame, "{}{}".format(" Moyenne des valeurs de flou : ", mean_focus_value ), (0, 160), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
+
+		cv2.imshow('frame', frame) #on affiche l'image de base
+
+		focus_sobel_tab.append(fm_sobel)
+		focus_laplacian_tab.append(fm_laplacian)
+		focus_canny_tab.append(fm_canny)
+		focus_moyenne_tab.append(mean_focus_value)
+		if cv2.waitKey(1) == ord('q'):
+			break #si q est appuyé, on quitte la boucle
+
+	fm_sobel_moy = int(np.mean(focus_sobel_tab))
+	fm_laplacian_moy = int(np.mean(focus_laplacian_tab))
+	fm_canny_moy = int(np.mean(focus_canny_tab))
+	fm_moyenne_moy = int(np.mean(focus_moyenne_tab))
+
+
+	return fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_moyenne_moy
