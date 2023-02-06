@@ -2,12 +2,12 @@ import function as fct
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
-
+import mplcursors
 
 ########INPUTS################################################################################
 Vmin_moteur_autofocus = 0
 Vmax_moteur_autofocus = 30
-pas_focus = 10
+pas_focus = 1
 
 color_frame = (0, 255, 0) #couleur du texte affiché sur l'image (vert)
 taille_text_frame = 0.5 #taille du texte affiché sur l'image
@@ -15,7 +15,7 @@ taille_text_frame = 0.5 #taille du texte affiché sur l'image
 cap = cv2.VideoCapture(0)
 
 nbre_image_moy_mesure = 20 #chaque résultat de mesure est la moyenne de nbre_image_moy_mesure images
-Position_tourelle = [[0, 0], [0, 45], [45, 45]]#, [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
+Position_tourelle = [[0, 0], [0, 45]]#, [45, 45]]#, [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
 
 
 
@@ -66,12 +66,13 @@ for pos_T in Position_tourelle:
 	
 	titre = "Recherche mire --> position de la tourelle : " + str(pos_T[0]) + ";" + str(pos_T[1])
 	plt.plot(best_focus_by_pos, bestnbr_symbole_by_pos)
-	plt.plot(best_focus, bestnbr_symbole, 'ro')
-	plt.annotate("meilleure position \n du moteur autofocus", (best_focus, bestnbr_symbole), textcoords="offset points", xytext=(-0,-20),fontsize = 5, color = 'red',  ha='center')
+	plt.plot(best_focus, bestnbr_symbole, 'ro', label = 'Position du moteur autofocus optimal')
 	plt.grid()
+	plt.legend(loc = 'lower left')
 	plt.xlabel('Position du moteur autofocus')
 	plt.ylabel('Nombre de symboles détectés')
 	plt.title(titre)
+	mplcursors.cursor( hover=True)#, annotations=True, annotation_kwargs=dict(fontsize=10, color='red'))
 	plt.show(block = False)
 
 
@@ -106,6 +107,7 @@ for pos_T in Position_tourelle:
 		plt.xlabel('Position du moteur autofocus')
 		plt.ylabel('Valeur de flou')
 		plt.title(titre)
+		mplcursors.cursor( hover=True)#, annotations=True, annotation_kwargs=dict(fontsize=10, color='red'))
 		plt.show(block = False)
 
 		cv2.destroyWindow('mire') #on ferme la fenêtre des contours
@@ -113,5 +115,5 @@ for pos_T in Position_tourelle:
 cap.release()
 cv2.destroyAllWindows()
 
-plt.show()
+plt.show() #pour bloquer les graphes et qu'ils ne disparaissent pas
 #FAIRE GRAPHES MATPLOTLIB

@@ -17,6 +17,49 @@ import math
 cap = cv2.VideoCapture(0)
 
 
+mat_15_15 = np.zeros((15,15)) #matrice 15*15 pour stocker les symboles de la mire
+matrice_RGB_moy = [mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15, mat_15_15] # liste de 25qqqqqq matrices pour moyenner les valeurs de symboles de la matrice --> Aide à la détection
+num_pos_matrice_RGB_moy = 0 #variable qui permet de savoir quelle matrice de la liste matrice_RGB_moy on doit remplir
+
+def moyennage_matrice_symbole(matrice, X_value, Y_value):
+    
+    global num_pos_matrice_RGB_moy
+    if num_pos_matrice_RGB_moy < len(matrice_RGB_moy)-1:
+        num_pos_matrice_RGB_moy = num_pos_matrice_RGB_moy + 1
+    else:
+        num_pos_matrice_RGB_moy = 0
+    matrice_RGB_moy[num_pos_matrice_RGB_moy] = matrice
+
+    matrice_moyennee = np.zeros((X_value, Y_value), dtype=np.uint8)
+    for i in range(X_value):
+        for j in range(Y_value):
+            moy_pixel = []
+            for k in range(len(matrice_RGB_moy)):
+                moy_pixel.append(matrice_RGB_moy[k][i, j])
+            moy_pixel_sans_0 = list(filter(lambda x: x != 0, moy_pixel)) #on enlève les 0 de la liste
+            if len(moy_pixel_sans_0) == 0: #si la liste est vide, on met 0 dans la matrice moyennee
+                matrice_moyennee[i, j] = 0
+            else:
+                matrice_moyennee[i, j] = np.argmax(np.bincount(moy_pixel)) #on prend la valeur la plus présente dans la liste moy_pixel
+    return matrice_moyennee
+
+def matrice_found_rgb_show(matrice, X_value, Y_value): #transforme la matrice numérique en matrice couleur
+
+
+    matrice_rgb = np.zeros((X_value, Y_value, 3), dtype=np.uint8)
+    colors = [(0, 0, 0), (0, 0, 255), (255,0 , 0)]
+    for i in range(X_value):
+        for j in range(Y_value):
+            matrice_rgb[j, i] = colors[matrice[i, j]]
+            try : 
+                matrice_rgb[j, i] = colors[matrice[i, j]]
+            except:
+                matrice_rgb[i, j] = (0, 0, 0)
+    matrice_rgb = cv2.resize(matrice_rgb, (450, 450), cv2.INTER_LINEAR)
+    cv2.imshow('matrice des symboles détectés', matrice_rgb) #on affiche la matrice de symbole
+
+
+
 def  matrice_normalisation(matrice, X_value, Y_value): #fonction qui permet de normaliser la matrice pour placer les symboles dans une matrice de taille X_value_wanted*Y_value_wanted 
 #MARCHE
     normalised_points_x = [point[0] for point in matrice]
@@ -45,21 +88,6 @@ def matrice_rotation(angle, mean_x, mean_y, matrice): #fonction qui permet de to
         rotated_point = np.dot(rotation_matrix, points)
         rotated_matrice.append(rotated_point)
     return rotated_matrice
-
-
-def matrice_found_rgb_show(matrice, X_value, Y_value): #transforme la matrice numérique en matrice couleur
-#MARCHE
-    matrice_rgb = np.zeros((X_value, Y_value, 3), dtype=np.uint8)
-    colors = [(0, 0, 0), (0, 0, 255), (255,0 , 0)]
-    for i in range(X_value):
-        for j in range(Y_value):
-            try : 
-                matrice_rgb[j, i] = colors[matrice[i, j]]
-            except:
-                matrice_rgb[i, j] = (0, 0, 0)
-    matrice_rgb = cv2.resize(matrice_rgb, (400, 400), cv2.INTER_LINEAR)
-    cv2.imshow('matrice des symboles détectés', matrice_rgb) #on affiche la matrice de symbole
-
 
 def variance_of_image_blur_laplacian(image): #MARCHE
 	# compute the Laplacian of the image and then return the focus
@@ -190,7 +218,7 @@ while True:
 
     #LIGNE CODE DEBUT************************************************************************************************************************************************************************************
     ret, frame = cap.read() #prendre une image
-    cv2.imshow('frame', frame) #on affiche l'image de base
+
     #creation des images de travail
     frame_orig  = frame.copy() #copier l'image pour pouvoir la réutiliser pour la mire avec le masque
     frame_symb_only = cv2.cvtColor(np.full(frame.shape[:2], 0, dtype=np.uint8), cv2.COLOR_GRAY2RGB) #création d'une image noire sur laquelle sera intercallée les symboles détectés
@@ -203,7 +231,6 @@ while True:
     canny_image_cont = cv2.cvtColor(canny_image, cv2.COLOR_GRAY2RGB) #convertir en couleur pour pouvoir afficher les contours en couleur --> frame avec contours
     cv2.imshow('Contours', canny_image_cont) #on affiche l'image avec les contours
     
-
     #DETECTION DES CERCLES ************************************************************************************************************************************************************************************
     for cnt in contours:    
         if cv2.contourArea(cnt) > 5: # Vérifier si le contour est suffisamment grand pour être considéré comme une forme
@@ -211,7 +238,7 @@ while True:
             rect = cv2.minAreaRect(cnt) # Obtenir le rectangle minimum qui englobe les points de contour
             (x, y), (w, h), angle = rect
             ratio = h/w
-            if ratio == 1:  #détection des cercles : on considère que c'est des carrés parfaits donc ratio = 1 (plus facile à détecter que des cercles eux mêmes)
+            if 0.995 < ratio <1.005 :  #détection des cercles : on considère que c'est des carrés parfaits donc ratio = 1 (plus facile à détecter que des cercles eux mêmes)
                 box = np.int0(cv2.boxPoints(rect))
                 
                 long = max(w, h) + long #longueur du symbole
@@ -230,11 +257,11 @@ while True:
     #DETECTION DES TRAITS ************************************************************************************************************************************************************************************
     for cnt in contours:     
         # Vérifier si le contour est suffisamment grand pour être considéré comme une forme
-        if cv2.contourArea(cnt) > 5: # Obtenir le rectangle minimum qui englobe les points de contour
+        if cv2.contourArea(cnt) > 4: # Obtenir le rectangle minimum qui englobe les points de contour
             rect = cv2.minAreaRect(cnt)
             (x, y), (w, h), angle = rect
             ratio = h/w
-            if max(w, h) < long_trait_max*1.5 and (0.10 < ratio <0.5 or 2 < ratio <10): #les rectangles sont environ 5fois plus grand en longueur que el largeur : ratio = env 3.5 ou env 0.28
+            if max(w, h) < long_trait_max*1.8 and (0.10 < ratio <0.5 or 2 < ratio <10): #les rectangles sont environ 5fois plus grand en longueur que el largeur : ratio = env 3.5 ou env 0.28
                 box = np.int0(cv2.boxPoints(rect))
                 cv2.drawContours(frame_symb_only,[box],0,(0,0,255),2) #dessiner un rectangle sur l'image des symboles détectés
 
@@ -253,7 +280,6 @@ while True:
     if points.size != 0: #si il y a des symboles détectés
         mean = np.mean(points, axis=0) #calcul de la moyenne des coordonnées des symboles
         distance = np.linalg.norm(points - mean, axis=1) #calcul de la distance entre chaque point et la moyenne
-        print(distance)
         good_points_et_type = points_et_type[distance < treshold] #on garde les points qui sont à moins de la distance treshold de la moyenne
         good_points = points[distance < treshold] 
 
@@ -270,6 +296,7 @@ while True:
 
         #TRI DES SYMBOLES & POSITION DE LA MIRE **************************************************************************************************************************************************************
             moments = cv2.moments(box)
+
             if rect is not None and moments["m00"] != 0 :
                 #calcul des moments de l'image pour trouver son centre de gravité
                 mean_x = int(moments["m10"] / moments["m00"]) 
@@ -285,6 +312,29 @@ while True:
                 cv2.arrowedLine(frame, (mean_x, mean_y), (end_x, end_y), (255, 255, 0), 1)
 
 
+
+   
+        #CREATION DE LA MATRICE SYMBOLE CORRESPONDANT A LA MIRE ET AUX BONS SYMBOLES*******************************************************************************************************************************
+
+
+    rotation_probable = 0
+    if len(good_points_et_type) >=15: #si il y a des symboles
+        if box is not None: #si la mire est détectée
+
+            rotated_points = matrice_rotation(angle, mean_x, mean_y, good_points) #rotation de la matrice contenant les coordonnées des symboles
+            normalised_points = matrice_normalisation(rotated_points, X_value_wanted, Y_value_wanted) #normalisation de la matrice contenant les coordonnées des symboles
+
+        i=0
+        for x, y in normalised_points:
+            matrice_symb[int(np.around(x))][int(np.around(y))] = good_points_et_type[i, 2] #on met les symboles dans la nouvelle matrice normalisée et rotationnée
+            i+=1 
+    matrice_symb_moyenne = moyennage_matrice_symbole(matrice_symb, X_value_wanted, Y_value_wanted) #retourne la matrice symbole moyennée sur 5 images --> permet de mieux connaitre la matrice symbole
+    
+
+    if np.count_nonzero(matrice_symb_moyenne)>15: #si il y a au moins 15 symboles
+        rotation_probable = comparison_mire(mire_reel, matrice_symb_moyenne)
+        cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + angle), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)   
+
         #MASQUE AVEC QUE LA MIRE ET CALCUL DE FLOU*******************************************************************************************************************************************************************************
     mode_name = ""
     if cv2.waitKey(1) == ord('r'): #on change de mode
@@ -298,40 +348,29 @@ while True:
     else:
         mode_name = "Freeze des contours"
 
+    if np.count_nonzero(matrice_symb_moyenne)>15: #si il y a au moins 15 symboles
+        cv2.fillConvexPoly(mire, box_2,255) #on remplit la mire avec du blanc
+        mire = cv2.bitwise_and(frame_orig, frame_orig, mask=mire) #on applique la mire sur l'image de départ
 
-    cv2.fillConvexPoly(mire, box_2,255) #on remplit la mire avec du blanc
-    mire = cv2.bitwise_and(frame_orig, frame_orig, mask=mire) #on applique la mire sur l'image de départ
+        gray_mire = cv2.cvtColor(mire, cv2.COLOR_BGR2GRAY)
+        fm_sobel = int(variance_of_image_blur_sobel(gray_mire))
+        fm_laplacian = int(variance_of_image_blur_laplacian(gray_mire))
+        fm_canny = int(variance_of_image_blur_Canny(gray_mire))
 
-    gray_mire = cv2.cvtColor(mire, cv2.COLOR_BGR2GRAY)
-    fm_sobel = int(variance_of_image_blur_sobel(gray_mire))
-    fm_laplacian = int(variance_of_image_blur_laplacian(gray_mire))
-    fm_canny = int(variance_of_image_blur_Canny(gray_mire))
+        cv2.putText(mire, "{}{}".format(" Sobel focus value : ", fm_sobel), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 1, cv2.LINE_AA)
+        cv2.putText(mire, "{}{}".format(" Laplacian focus value : ", fm_laplacian), (0, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 1, cv2.LINE_AA)
+        cv2.putText(mire, "{}{}".format(" Canny focus value : ", fm_laplacian), (0, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
+        cv2.putText(mire, "{}{}".format(" Moyenne des valeurs de flou : ", int((fm_sobel+fm_laplacian+fm_canny)/3)), (0, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 1, cv2.LINE_AA)
+        cv2.putText(mire, "{}".format(mode_name), (0, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 1, cv2.LINE_AA)
 
-    cv2.putText(mire, "{}{}".format(" Sobel focus value : ", fm_sobel), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 1, cv2.LINE_AA)
-    cv2.putText(mire, "{}{}".format(" Laplacian focus value : ", fm_laplacian), (0, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 1, cv2.LINE_AA)
-    cv2.putText(mire, "{}{}".format(" Canny focus value : ", fm_laplacian), (0, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
-    cv2.putText(mire, "{}{}".format(" Moyenne des valeurs de flou : ", int((fm_sobel+fm_laplacian+fm_canny)/3)), (0, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 1, cv2.LINE_AA)
-    cv2.putText(mire, "{}".format(mode_name), (0, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 1, cv2.LINE_AA)
-   
-        #CREATION DE LA MATRICE SYMBOLE CORRESPONDANT A LA MIRE ET AUX BONS SYMBOLES*******************************************************************************************************************************
 
-    if len(good_points_et_type) >=15: #si il y a des symboles
-        if box is not None: #si la mire est détectée
 
-            rotated_points = matrice_rotation(angle, mean_x, mean_y, good_points) #rotation de la matrice contenant les coordonnées des symboles
-            normalised_points = matrice_normalisation(rotated_points, X_value_wanted, Y_value_wanted) #normalisation de la matrice contenant les coordonnées des symboles
 
-        i=0
-        for x, y in normalised_points:
-            matrice_symb[round(x)][round(y)] = good_points_et_type[i, 2] #on qmet les symboles dans la nouvelle matrice normalisée et rotationnée
-            i+=1 
-        rotation_probable = comparison_mire(mire_reel, matrice_symb)
-        cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + angle), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)    
     #LIGNE CODE FIN************************************************************************************************************************************************************************************ 
  
 
-    matrice_found_rgb_show(matrice_symb, X_value_wanted, Y_value_wanted) # transforme la matrice symbole en image RGB et l'affiche
-
+    matrice_found_rgb_show(matrice_symb_moyenne, X_value_wanted, Y_value_wanted) # transforme la matrice symbole en image RGB et l'affiche
+    cv2.imshow('frame', frame) #on affiche l'image de base
     cv2.imshow('frame_symb_only', frame_symb_only) #on affiche l'image avec les symboles
     cv2.imshow('mire', mire) #on affiche la mire
 
