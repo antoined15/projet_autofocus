@@ -283,16 +283,15 @@ while True:
         good_points_et_type = points_et_type[distance < treshold] #on garde les points qui sont à moins de la distance treshold de la moyenne
         good_points = points[distance < treshold] 
 
-        if len(good_points_et_type) >=15: #si il y a au moins 10 symboles proches, on considère qu'on a trouvé la mire
+        if len(good_points_et_type) >=10: #si il y a au moins 10 symboles proches, on considère qu'on a trouvé la mire
             hull = cv2.convexHull(np.array(good_points))
-            cv2.polylines(frame, [hull], True, (0,255,0), 2) # dessiner le polygone convexe correspondant à la mire
-            cv2.polylines(frame_symb_only, [hull], True, (0,255,0), 2) # dessiner le polygone convexe correspondant à la mire
+
             
             #dessiner le rectangle minimum qui englobe les points de cqqqqontour
             rect = cv2.minAreaRect(good_points) 
             width_rectangle_mire, height_rectangle_mire = rect[1]
             box = np.int0(cv2.boxPoints(rect))
-            cv2.drawContours(frame, [box], 0, (0,0,255), 2) 
+
 
         #TRI DES SYMBOLES & POSITION DE LA MIRE **************************************************************************************************************************************************************
             moments = cv2.moments(box)
@@ -301,19 +300,12 @@ while True:
                 #calcul des moments de l'image pour trouver son centre de gravité
                 mean_x = int(moments["m10"] / moments["m00"]) 
                 mean_y = int(moments["m01"] / moments["m00"])   
-                cv2.circle(frame, (mean_x, mean_y), 10, (255, 255, 0), 2)
-                cv2.putText(frame, "{}{}{}{}".format(" Position du centre de gravite de la mire : X=", mean_x," ; Y=", mean_y), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+
                 
                 angle = int(rect[-1]) #angle du rectangle englobant
                 arrow_length = 100
                 end_x = int(mean_x + arrow_length * np.cos(np.deg2rad(angle)))
-                end_y = int(mean_y + arrow_length * np.sin(np.deg2rad(angle)))
-                cv2.putText(frame, "{}{}".format(" Vecteur de rotation du rectangle englobant : angle = ", angle), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)         
-                cv2.arrowedLine(frame, (mean_x, mean_y), (end_x, end_y), (255, 255, 0), 1)
-
-
-
-   
+                end_y = int(mean_y + arrow_length * np.sin(np.deg2rad(angle)))   
         #CREATION DE LA MATRICE SYMBOLE CORRESPONDANT A LA MIRE ET AUX BONS SYMBOLES*******************************************************************************************************************************
 
 
@@ -331,10 +323,16 @@ while True:
     matrice_symb_moyenne = moyennage_matrice_symbole(matrice_symb, X_value_wanted, Y_value_wanted) #retourne la matrice symbole moyennée sur 5 images --> permet de mieux connaitre la matrice symbole
     
 
-    if np.count_nonzero(matrice_symb_moyenne)>15: #si il y a au moins 15 symboles
+    if np.count_nonzero(matrice_symb_moyenne)>5: #si il y a au moins 5 symboles
         rotation_probable = comparison_mire(mire_reel, matrice_symb_moyenne)
-        cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + angle), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)   
-
+        cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + angle), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA) 
+        cv2.circle(frame, (mean_x, mean_y), 10, (255, 255, 0), 2)
+        cv2.putText(frame, "{}{}{}{}".format(" Position du centre de gravite de la mire : X=", mean_x," ; Y=", mean_y), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
+        cv2.putText(frame, "{}{}".format(" Vecteur de rotation du rectangle englobant : angle = ", angle), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)         
+        cv2.arrowedLine(frame, (mean_x, mean_y), (end_x, end_y), (255, 255, 0), 1)
+        cv2.polylines(frame, [hull], True, (0,255,0), 2) # dessiner le polygone convexe correspondant à la mire
+        cv2.polylines(frame_symb_only, [hull], True, (0,255,0), 2) # dessiner le polygone convexe correspondant à la mire
+        cv2.drawContours(frame, [box], 0, (0,0,255), 2) 
         #MASQUE AVEC QUE LA MIRE ET CALCUL DE FLOU*******************************************************************************************************************************************************************************
     mode_name = ""
     if cv2.waitKey(1) == ord('r'): #on change de mode
@@ -348,7 +346,7 @@ while True:
     else:
         mode_name = "Freeze des contours"
 
-    if np.count_nonzero(matrice_symb_moyenne)>15: #si il y a au moins 15 symboles
+    if np.count_nonzero(matrice_symb_moyenne)>10: #si il y a au moins 15 symboles
         cv2.fillConvexPoly(mire, box_2,255) #on remplit la mire avec du blanc
         mire = cv2.bitwise_and(frame_orig, frame_orig, mask=mire) #on applique la mire sur l'image de départ
 
