@@ -92,7 +92,14 @@ def moyennage_matrice_symbole(matrice): #fonction qui permet de faire un moyenna
                     matrice_moyennee[i, j] = 2
     return matrice_moyennee
 
+def pourcent_symbole_detected(matrice): #fonction qui permet de calculer le pourcentage de symbole détecté
 
+    global nbr_row_matrice
+    global nbr_col_matrice
+
+    symbole_found = np.count_nonzero(np.array(matrice))
+    pourcent_symb_detect = round(100 * symbole_found/(nbr_row_matrice*nbr_col_matrice), 3)
+    return pourcent_symb_detect
 
 def matrice_rgb_show(matrice): #transforme la matrice numérique en matrice couleur et l'affiche
     
@@ -108,7 +115,9 @@ def matrice_rgb_show(matrice): #transforme la matrice numérique en matrice coul
                 matrice_rgb[j, i] = colors[matrice[i, j]]
             except:
                 matrice_rgb[i, j] = (0, 0, 0)
-    matrice_rgb = cv2.resize(matrice_rgb, (450, 450), cv2.INTER_LINEAR)
+    matrice_rgb = cv2.resize(matrice_rgb, (450, 450), cv2.INTER_NEAREST)
+    pourc_symb = pourcent_symbole_detected(matrice) #affiche le pourcentage de symboles détecté
+    cv2.putText(matrice_rgb, "{}{}{}".format(" Symboles detectes : ", round(pourc_symb, 2), "%"), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
     cv2.imshow('matrice des symboles detectes', matrice_rgb) #on affiche la matrice de symbole
 
 
@@ -181,11 +190,9 @@ def symbole_identique_2_matrices_V4(matrice1, matrice2): #calcul de l'erreur ent
     pourcent_erreur = 100 * (1-(juste / (nbr_row_matrice*nbr_col_matrice)))       
     return np.round(pourcent_erreur, 5)
 
+
 def comparison_mire(real_mire, matrice_symb): #fonction globale pour comparer la mire originelle avec la mire potentielle trouvée
     #MARCHE mais à améliorer
-    symbole_found = np.count_nonzero(np.array(matrice_symb))
-    pourcent_symb_detect = round(100 * symbole_found/225, 3)
-    print("Pourcentage de symboles détectés : ", pourcent_symb_detect, "%")
 
     matrice_symb_rot_90 = np.rot90(matrice_symb, k=1)
     matrice_symb_rot_180 = np.rot90(matrice_symb, k=2)
@@ -196,11 +203,11 @@ def comparison_mire(real_mire, matrice_symb): #fonction globale pour comparer la
     pourcent_symb_valide_180 = symbole_identique_2_matrices_V4(real_mire, matrice_symb_rot_180)
     pourcent_symb_valide_270 = symbole_identique_2_matrices_V4(real_mire, matrice_symb_rot_270)
 
-    print("Mean Square Error : lower the value, better the shape")
-    print("r=0° : ",pourcent_symb_valide_0,)
-    print("r=90° : ",pourcent_symb_valide_90)
-    print("r=180° : ",pourcent_symb_valide_180)
-    print("=270° : ",pourcent_symb_valide_270)
+    #print("Mean Square Error : lower the value, better the shape")
+    #print("r=0° : ",pourcent_symb_valide_0,)
+    #print("r=90° : ",pourcent_symb_valide_90)
+    #print("r=180° : ",pourcent_symb_valide_180)
+    #print("=270° : ",pourcent_symb_valide_270)
 
     max_symb_valid = min(pourcent_symb_valide_0, pourcent_symb_valide_90, pourcent_symb_valide_180, pourcent_symb_valide_270)
     if max_symb_valid == pourcent_symb_valide_0:
@@ -350,10 +357,10 @@ while True:
         rotation_probable = comparison_mire(Mire_reel, matrice_symb_moyenne)
     
     if  np.count_nonzero(matrice_symb_moyenne)>15 or mode ==2: #si iqqqqql y a au moins 5 symboles ou si on est en mode 2 --> freeze de la position de la mire
-        cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + angle), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA) 
+        cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + int(angle)), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA) 
         cv2.circle(frame, (mean_x, mean_y), 10, (255, 255, 0), 2)
         cv2.putText(frame, "{}{}{}{}".format(" Position du centre de gravite de la mire : X=", mean_x," ; Y=", mean_y), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
-        cv2.putText(frame, "{}{}".format(" Vecteur de rotation du rectangle englobant : angle = ", angle), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)         
+        cv2.putText(frame, "{}{}".format(" Vecteur de rotation du rectangle englobant : angle = ", int(angle)), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)         
         cv2.arrowedLine(frame, (mean_x, mean_y), (end_x, end_y), (255, 255, 0), 1)
 
         angle_total = rotation_probable + angle #angle du rectangle englobant
@@ -407,6 +414,7 @@ while True:
  
     if matrice_symb_moyenne is not None: #si la matrice des symboles n'est pas vide
         matrice_rgb_show(matrice_symb_moyenne) # transforme la matrice symbole en image RGB et l'affiche
+
     cv2.imshow('frame', frame) #on affiche l'image de base
     cv2.imshow('frame_symb_only', frame_symb_only) #on affiche l'image avec les symboles
     cv2.imshow('mire', mire) #on affiche la mire
