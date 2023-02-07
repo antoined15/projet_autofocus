@@ -157,13 +157,28 @@ def matrice_rotation(angle, mean_x, mean_y, matrice): #fonction qui permet de to
 def variance_of_image_blur_laplacian(image): #Calcule la valeur de flou de l'image avec le Laplacien
 	return round(cv2.Laplacian(image, cv2.CV_64F).var(), 2)
 
-def variance_of_image_blur_sobel(image): #Calcule la valeur de flou de l'image avec le Sobel
-	return round(cv2.Sobel(image,cv2.CV_64F,1,0,ksize=3 ).var(), 1)
+def variance_of_image_blur_sobel(image): #Calcule la valeur de flou de l'image avec le Sobel --> méthode de la dérivée seconde
+    sobelx = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=5) #calcul du gradient de Sobel selon l'axe x
+    sobely = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=5) #calcul du gradient de Sobel selon l'axe y
+    
+    return cv2.norm(sobelx, sobely, cv2.NORM_L2) #calcul de la norme des deux gradients
 
 def variance_of_image_blur_Canny(image):#Calcule la valeur de flou de l'image avec le Canny
 	return round(cv2.Canny(image, 100, 200).var(), 1)
 
+def variance_of_image_blur_entropy(image):#Calcule la valeur de flou de l'image par méthode statistique avec l'entropie : dispersion des pixels de l'image
+    hist = np.histogram(image, bins=256, range=(0, 255))[0]
+    hist = hist / hist.sum()
+    return -np.sum(hist * np.log2(hist + 1e-7))
 
+def variance_of_image_blur_corner_counter(image): #Calcule la valeur de flou de l'image avec le nombre de coins détectés
+    fast = cv2.FastFeatureDetector_create()
+    kp = fast.detect(image, None)
+    return len(kp)
+
+def variance_of_image_blur_picture_variability(image): #Calcule la valeur de flou de l'image avec la variabilité de l'image
+    mean , stddev = cv2.meanStdDev(gray)
+    return mean[0][0]
 
 def symbole_identique_2_matrices_V3(matrice1, matrice2): #calcul de l'erreur quadratique moyenne entre deux matrices
     h, w = np.array(matrice1).shape
@@ -345,7 +360,7 @@ while True:
                 end_y = int(mean_y + arrow_length * np.sin(np.deg2rad(angle)))   
         #CREATION DE LA MATRICE SYMBOLE CORRESPONDANT A LA MIRE ET AUX BONS SYMBOLES*******************************************************************************************************************************
 
-    perspective_mire(frame, box) #optionnel, affiche la perspective de la mire
+
 
 
 
@@ -371,6 +386,7 @@ while True:
     
     if np.count_nonzero(matrice_symb_moyenne)>10 : #si il y a au moins 5 symboles
         rotation_probable = comparison_mire(Mire_reel, matrice_symb_moyenne)
+        #perspective_mire(frame, box) #optionnel, affiche la perspective de la mire
     
     if  np.count_nonzero(matrice_symb_moyenne)>15 or mode ==2: #si iqqqqql y a au moins 5 symboles ou si on est en mode 2 --> freeze de la position de la mire
         cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + int(angle)), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA) 
@@ -414,15 +430,22 @@ while True:
         fm_sobel = int(variance_of_image_blur_sobel(gray_mire))
         fm_laplacian = int(variance_of_image_blur_laplacian(gray_mire))
         fm_canny = int(variance_of_image_blur_Canny(gray_mire))
+        fm_entropie = round(variance_of_image_blur_entropy(gray_mire), 4)
+        fm_corner_counter = variance_of_image_blur_corner_counter(gray_mire)
+        fm_picture_variance = round(variance_of_image_blur_picture_variability(gray_mire), 3)
 
-        cv2.putText(mire, "{}{}".format(" Sobel focus value : ", fm_sobel), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 1, cv2.LINE_AA)
-        cv2.putText(mire, "{}{}".format(" Laplacian focus value : ", fm_laplacian), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 1, cv2.LINE_AA)
-        cv2.putText(mire, "{}{}".format(" Canny focus value : ", fm_laplacian), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1, cv2.LINE_AA)
-        cv2.putText(mire, "{}{}".format(" Moyenne des valeurs de flou : ", int((fm_sobel+fm_laplacian+fm_canny)/3)), (0, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
-        cv2.putText(mire, "{}".format(mode_name), (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
+        cv2.putText(mire, "{}{}".format(" Sobel focus value : ", fm_sobel), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv2.LINE_AA)
+        cv2.putText(mire, "{}{}".format(" Laplacian focus value : ", fm_laplacian), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
+        cv2.putText(mire, "{}{}".format(" Canny focus value : ", fm_canny), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
+
+        cv2.putText(mire, "{}{}".format(" Entropy focus value : ", fm_entropie), (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1, cv2.LINE_AA)
+        cv2.putText(mire, "{}{}".format(" Number of corner detected: ", fm_corner_counter), (0, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 1, cv2.LINE_AA)
+        cv2.putText(mire, "{}{}".format(" Picture variance : ", fm_picture_variance), (0, 140), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (122, 255, 122), 1, cv2.LINE_AA)
+
+        cv2.putText(mire, "{}".format(mode_name), (0, 160), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
         if mode==0:
-                cv2.putText(mire, "{}{}{}{}{}{}".format(" Position mire : X=", x_pos_mire_if_freeze," ; Y=", y_pos_mire_if_freeze," ; angle =", angle_mire_if_freeze), (0, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
+                cv2.putText(mire, "{}{}{}{}{}{}".format(" Position mire : X=", x_pos_mire_if_freeze," ; Y=", y_pos_mire_if_freeze," ; angle =", angle_mire_if_freeze), (0, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
  
 
 
