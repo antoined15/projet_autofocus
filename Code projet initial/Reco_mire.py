@@ -218,10 +218,21 @@ def comparison_mire(real_mire, matrice_symb): #fonction globale pour comparer la
         rot_probable = 180
     else:
         rot_probable = 270
-    print("Rotation de la mire probable :", rot_probable, "°")
-    print("----------------")
+    #print("Rotation de la mire probable :", rot_probable, "°")
+    #print("----------------")
     return rot_probable
 
+
+
+
+def perspective_mire(image, box): #fonction pour transformer l'image de mire en perspective --> Sert à rien en tant que tel, mais stylé
+
+    pts1 = np.float32([box[0], box[1], box[3], box[2]])
+    pts2 = np.float32([[0,0],[300,0],[0,300],[300,300]])        
+
+    matrix = cv2.getPerspectiveTransform(pts1, pts2 )
+    perspective = cv2.warpPerspective(image, matrix, (300, 300))
+    cv2.imshow('perspective', perspective)
 
 ###################################################################################################################################################################################################################################################
 
@@ -314,10 +325,11 @@ while True:
             
             #dessiner le rectangle minimum qui englobe les points de cqqqqontour
             rect = cv2.minAreaRect(good_points) 
+
             width_rectangle_mire, height_rectangle_mire = rect[1]
             box = np.int0(cv2.boxPoints(rect))
-
-
+    
+            
         #TRI DES SYMBOLES & POSITION DE LA MIRE **************************************************************************************************************************************************************
             moments = cv2.moments(box)
 
@@ -332,6 +344,10 @@ while True:
                 end_x = int(mean_x + arrow_length * np.cos(np.deg2rad(angle)))
                 end_y = int(mean_y + arrow_length * np.sin(np.deg2rad(angle)))   
         #CREATION DE LA MATRICE SYMBOLE CORRESPONDANT A LA MIRE ET AUX BONS SYMBOLES*******************************************************************************************************************************
+
+    perspective_mire(frame, box) #optionnel, affiche la perspective de la mire
+
+
 
     rotation_probable = 0
     try: good_points_et_type
@@ -352,7 +368,7 @@ while True:
                 i+=1 
         matrice_symb_moyenne = moyennage_matrice_symbole(matrice_symb) #retourne la matrice symbole moyennée sur 5 images --> permet de mieux connaitre la matrice symbole
     
-
+    
     if np.count_nonzero(matrice_symb_moyenne)>10 : #si il y a au moins 5 symboles
         rotation_probable = comparison_mire(Mire_reel, matrice_symb_moyenne)
     
