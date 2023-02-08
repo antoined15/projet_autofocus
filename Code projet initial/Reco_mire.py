@@ -33,7 +33,7 @@ for i in range(nbr_moyennage_matrice_symbole):
     matrice_circulaire_mire_symbole.append(mat_dim_mire) #on remplit la liste avec des matrices de 15*15
 
 Mire_reel = [[1,2,2,2,1,2,1,2,2,2,1,2,2,2,1],#correspond à la mire réelle (normalement)
-            [2,2,2,1,1,1,2,1,1,2,2,1,2,2,1], #si = 1, trait. Si = 2, ronds ou point
+            [2,2,2,1,1,1,2,1,1,2,2,1,2,2,1], #si = 1, trait. Si = 2, ronds, si 3 = cercle
             [2,1,2,2,1,2,2,2,2,2,2,2,2,2,1],
             [1,2,1,2,2,2,1,2,2,2,2,2,1,2,2],
             [1,1,2,1,2,1,2,2,2,1,1,2,1,2,2],
@@ -81,15 +81,21 @@ def moyennage_matrice_symbole(matrice): #fonction qui permet de faire un moyenna
             else:
                 nbr_1 = 0
                 nbr_2 = 0
+                nbr_3 = 0
                 for l in range(len(moy_pixel_sans_0)):
                     if moy_pixel_sans_0[l] == 1 :
                         nbr_1 = nbr_1 + 1
                     elif moy_pixel_sans_0[l] == 2:
                         nbr_2 = nbr_2 + 1
-                if nbr_1 > nbr_2:
+                    elif moy_pixel_sans_0[l] == 3:
+                        nbr_3 = nbr_3 + 1
+
+                if max(nbr_1, nbr_2, nbr_3) == nbr_1:
                     matrice_moyennee[i, j] = 1
-                elif nbr_2 > nbr_1:
+                elif max(nbr_1, nbr_2, nbr_3) == nbr_2:
                     matrice_moyennee[i, j] = 2
+                elif max(nbr_1, nbr_2, nbr_3) == nbr_3:
+                    matrice_moyennee[i, j] = 3
     return matrice_moyennee
 
 def pourcent_symbole_detected(matrice): #fonction qui permet de calculer le pourcentage de symbole détecté
@@ -261,6 +267,7 @@ while True:
     matrice_symbole_x = [] #contient les coordonnées x des symboles de la mire trouvés
     matrice_symbole_y = [] #contient les coordonnées y des symboles de la mire trouvés
     matrice_symbole_type = [] #contient le type de symbole (1 = trait, 2 = cercle) trouvés
+    matrice_symbole_rayon = [] #contient le rayon des cercles trouvés pour pouvoir faire la distinction des disques ou des ronds pleins
 
     mean_x = 0 #moyenne des coordonnées x des symboles de la mire trouvés
     mean_y = 0 #moyenne des coordonnées y des symboles de la mire trouvés
@@ -294,7 +301,7 @@ while True:
                 matrice_symbole_x.append(int(x)) #ajout de la coordonnée x du symbole dans la matrice des coordonnées x des symboles
                 matrice_symbole_y.append(int(y)) #ajout de la coordonnée y du symbole dans la matrice des coordonnées y des symboles
                 matrice_symbole_type.append(2) #ajout du type du symbole dans la matrice des types des symboles
-                
+                matrice_symbole_rayon.append(int(min(w/2,h/2))) #ajout du rayon du cercle dans la matrice des rayons des cercles
                 cv2.circle(frame_symb_only, (int(x), int(y)), int(min(w/2,h/2)), (255,0,0), 2) #dessiner un cercle sur l'image des symboles détectés              
                 nbr_circle_detected = nbr_circle_detected+1
     if nbr_circle_detected>0:
@@ -312,29 +319,30 @@ while True:
             ratio = h/w
             #ratio_list.append(round(h/w, 4))
             #if max(w, h) < long_trait_max*1.6 and (0.10 < ratio <0.5 or 2 < ratio <10): #les rectangles sont environ 5fois plus grand en longueur que el largeur : ratio = env 3.5 ou env 0.28
-            if max(w, h) < long_trait_max*1.6 and (0.2 < ratio <0.6 or 1.6 < ratio <5):
+            if max(w, h) < long_trait_max*1.6 and (0.2 < ratio <0.5 or 1.8 < ratio <5):
                 box = np.int0(cv2.boxPoints(rect))
                 cv2.drawContours(frame_symb_only,[box],0,(0,0,255),2) #dessiner un rectangle sur l'image des symboles détectés
 
                 matrice_symbole_x.append(int(x)) #ajout de la coordonnée x du symbole dans la matrice des coordonnées x des symboles
                 matrice_symbole_y.append(int(y)) #ajout de la coordonnée y du symbole dans la matrice des coordonnées y des symboles
                 matrice_symbole_type.append(1) #ajout du type du symbole dans la matrice des types des symboles
+                matrice_symbole_rayon.append(0)
                 nbr_circle_detected=nbr_circle_detected+1 
 
     #ENLEVER LES SYMBOLES FAUX POSITIFS ************************************************************************************************************************************************************************************
     
-    points_et_type = np.array(np.column_stack((matrice_symbole_x, matrice_symbole_y, matrice_symbole_type)), dtype = np.int32)
+    points_et_type_et_rayon = np.array(np.column_stack((matrice_symbole_x, matrice_symbole_y, matrice_symbole_type, matrice_symbole_rayon)), dtype = np.int32)
     points = np.array(np.column_stack((matrice_symbole_x, matrice_symbole_y, )), dtype = np.int32)
 
-    treshold = long_trait_max * 20 #distance pour que les points soient considérés comme des vraies symboles : cercle de rayon de 20 fois la longueur moyenne des traits centré sur le centre de gravité de la mire
+    treshold = long_trait_max * 25 #distance pour que les points soient considérés comme des vraies symboles : cercle de rayon de 20 fois la longueur moyenne des traits centré sur le centre de gravité de la mire
 
     if points.size != 0: #si il y a des symboles détectés
         mean = np.mean(points, axis=0) #calcul de la moyenne des coordonnées des symboles
         distance = np.linalg.norm(points - mean, axis=1) #calcul de la distance entre chaque point et la moyenne
-        good_points_et_type = points_et_type[distance < treshold] #on garde les points qui sont à moins de la distance treshold de la moyenne
+        good_points_et_type_et_rayon = points_et_type_et_rayon[distance < treshold] #on garde les points qui sont à moins de la distance treshold de la moyenne
         good_points = points[distance < treshold] 
 
-        if len(good_points_et_type) >=10: #si il y a au moins 10 symboles proches, on considère qu'on a trouvé la mire
+        if len(good_points_et_type_et_rayon) >=10: #si il y a au moins 10 symboles proches, on considère qu'on a trouvé la mire
             hull = cv2.convexHull(np.array(good_points))
 
             
@@ -360,26 +368,37 @@ while True:
                 end_y = int(mean_y + arrow_length * np.sin(np.deg2rad(angle)))   
         #CREATION DE LA MATRICE SYMBOLE CORRESPONDANT A LA MIRE ET AUX BONS SYMBOLES*******************************************************************************************************************************
 
-
-
-
-
     rotation_probable = 0
-    try: good_points_et_type
+    try: good_points_et_type_et_rayon
     except NameError: 
-        good_points_et_type = None
+        good_points_et_type_et_rayon = None
         matrice_symb_moyenne = None
 
-    if good_points_et_type is not None: #si il y a des symboles 
-        if len(good_points_et_type) >=15: #si il y a suffisament de symboles
+    if good_points_et_type_et_rayon is not None: #si il y a des symboles 
+        if len(good_points_et_type_et_rayon) >=15: #si il y a suffisament de symboles
             if box is not None: #si la mire est détectée
 
                 rotated_points = matrice_rotation(angle, mean_x, mean_y, good_points) #rotation de la matrice contenant les coordonnées des symboles
                 normalised_points = matrice_normalisation(rotated_points) #normalisation de la matrice contenant les coordonnées des symboles
 
             i=0
-            for x, y in normalised_points:
-                matrice_symb[int(np.around(x))][int(np.around(y))] = good_points_et_type[i, 2] #on met les symboles dans la nouvelle matrice normalisée et rotationnée
+            #calcul du rayon moyen des cercles détectés. Si le cercle est plus petit que la moyenne, alors on a un cercle et non un rond
+            #qqmean_rayon = np.mean(good_points_et_type_et_rayon[:, 3])
+            mean_rayon= np.mean(list(filter(lambda x: x != 0, good_points_et_type_et_rayon[:, 3]))) #on enlève les 0 de la liste
+            for x, y in normalised_points: #on met les symboles dans la nouvelle matrice normalisée et rotationnée
+                
+                if good_points_et_type_et_rayon[i, 3] == 0 : #On a un trait
+                    matrice_symb[int(np.around(x))][int(np.around(y))] = 1 #on met un trait
+                else: #Soit un trait soit un rond
+                    
+                    if matrice_symb[int(np.around(x))][int(np.around(y))] ==3 : #Si déjà un cercle détecté, on passe car on veut pas le remplacer par un rond
+                        pass
+                    elif matrice_symb[int(np.around(x))][int(np.around(y))] == 0 : #Si pas de symbole,
+
+                        if good_points_et_type_et_rayon[i, 3] < mean_rayon*0.98 : #Si le rayon du symbole est plus petit que la moyenne, alors on a un cercle
+                            matrice_symb[int(np.around(x))][int(np.around(y))] = 3 #on met un cercle
+                        else: #Sinon on a un rond
+                            matrice_symb[int(np.around(x))][int(np.around(y))] = 2 #on met un rond
                 i+=1 
         matrice_symb_moyenne = moyennage_matrice_symbole(matrice_symb) #retourne la matrice symbole moyennée sur 5 images --> permet de mieux connaitre la matrice symbole
     
@@ -388,7 +407,7 @@ while True:
         rotation_probable = comparison_mire(Mire_reel, matrice_symb_moyenne)
         #perspective_mire(frame, box) #optionnel, affiche la perspective de la mire
     
-    if  np.count_nonzero(matrice_symb_moyenne)>15 or mode ==2: #si iqqqqql y a au moins 5 symboles ou si on est en mode 2 --> freeze de la position de la mire
+    if  np.count_nonzero(matrice_symb_moyenne)>15 or mode ==2: #si il y a au moins 5 symboles ou si on est en mode 2 --> freeze de la position de la mire
         cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + int(angle)), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA) 
         cv2.circle(frame, (mean_x, mean_y), 10, (255, 255, 0), 2)
         cv2.putText(frame, "{}{}{}{}".format(" Position du centre de gravite de la mire : X=", mean_x," ; Y=", mean_y), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
