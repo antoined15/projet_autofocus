@@ -32,8 +32,8 @@ nbr_moyennage_matrice_symbole = 30 #nombre de moyennage de la matrice des symbol
 for i in range(nbr_moyennage_matrice_symbole):
     matrice_circulaire_mire_symbole.append(mat_dim_mire) #on remplit la liste avec des matrices de 15*15
 
-Mire_reel = [[1,2,2,2,1,2,1,2,2,2,1,2,2,2,1],#correspond à la mire réelle (normalement)
-            [2,2,2,1,1,1,2,1,1,2,2,1,2,2,1], #si = 1, trait. Si = 2, ronds, si 3 = cercle
+Mire_reel_ancien = [[1,2,2,2,1,2,1,2,2,2,1,2,2,2,1],#correspond à la mire réelle (normalement)
+            [2,2,2,1,1,1,2,1,1,2,2,1,2,2,1], 
             [2,1,2,2,1,2,2,2,2,2,2,2,2,2,1],
             [1,2,1,2,2,2,1,2,2,2,2,2,1,2,2],
             [1,1,2,1,2,1,2,2,2,1,1,2,1,2,2],
@@ -47,6 +47,24 @@ Mire_reel = [[1,2,2,2,1,2,1,2,2,2,1,2,2,2,1],#correspond à la mire réelle (nor
             [2,2,1,2,1,2,2,2,2,2,1,1,2,2,2],
             [2,1,2,1,1,2,1,1,2,1,2,2,1,2,2],
             [2,2,2,2,1,2,1,2,1,1,2,1,2,2,2]]
+
+
+Mire_reel =  [[1, 3, 3, 2, 1, 3, 1, 2, 3, 3, 1, 3, 2, 2, 1], #si = 1, trait. Si = 2, ronds, si 3 = cercle
+                [3, 2, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 3, 3, 1], 
+                [2, 1, 2, 2, 1, 2, 2, 2, 3, 3, 3, 2 ,3, 3, 1], 
+                [1, 3, 1, 3, 3, 3, 1, 3, 2, 2, 2, 3, 1, 2, 3], 
+                [1, 1, 3, 1, 3, 1, 2, 3, 2, 1, 1, 3, 1, 2, 3], 
+                [2, 1, 3, 3, 2, 1, 2, 1, 2, 1, 3, 2, 2, 1, 2], 
+                [2, 3, 1, 1, 2, 3, 3, 1, 3, 3, 1, 2, 1, 1, 2],
+                [1, 2, 2, 3, 1, 2, 1, 1, 1, 3, 2, 1, 2, 1, 1], 
+                [3, 1, 2, 2, 1, 3, 2, 3, 2, 2 ,3, 1, 2, 3 ,1], 
+                [3, 3, 3, 1, 1, 1, 3, 1, 2, 3, 3, 3, 1 ,3 ,2], 
+                [1, 3, 3, 2, 2, 1, 1 ,3, 3, 2, 3, 1, 3, 2, 1], 
+                [3, 3, 2, 1, 3, 1, 3, 1, 3, 3, 1, 1, 1, 3, 1], 
+                [2, 2, 1, 2, 1, 3, 2, 2, 2, 3, 1, 1 ,2, 3, 3], 
+                [3, 1, 2, 1, 1, 3, 1, 1, 2, 1, 2, 3, 1, 2, 2], 
+                [3, 2, 3, 3, 1, 2, 1, 3, 1, 1, 3, 1, 2, 3, 3]] #correspond à la mire réelle (normalement)
+
 
 mode =  1 #si 0, on garde les mêmes coordonnées pour la mire. Si 1, on met à jours en temps réel : change en appuyant sur la touche "q"
 box_if_freeze = [[0, 0], [0, 0], [0, 0], [0, 0]] #coordonnées de la boite englobante de la mire
@@ -386,8 +404,10 @@ while True:
             #qqmean_rayon = np.mean(good_points_et_type_et_rayon[:, 3])
             mean_rayon= np.mean(list(filter(lambda x: x != 0, good_points_et_type_et_rayon[:, 3]))) #on enlève les 0 de la liste
             for x, y in normalised_points: #on met les symboles dans la nouvelle matrice normalisée et rotationnée
-                
-                if good_points_et_type_et_rayon[i, 3] == 0 : #On a un trait
+                if matrice_symb[int(np.around(x))][int(np.around(y))] == 2 and good_points_et_type_et_rayon[i, 3] == 2 : #Si on a 2 symboles rond, alors c'est un cercle
+                    matrice_symb[int(np.around(x))][int(np.around(y))] = 3 #on met un cercle
+
+                elif good_points_et_type_et_rayon[i, 3] == 0 : #On a un trait
                     matrice_symb[int(np.around(x))][int(np.around(y))] = 1 #on met un trait
                 else: #Soit un trait soit un rond
                     
