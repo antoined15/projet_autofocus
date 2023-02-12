@@ -28,6 +28,7 @@ nbr_col_matrice = mat_dim_mire.shape[0]
 matrice_circulaire_mire_symbole = [] #liste qui contiendra les matrices symboles pour moyennage des symboles
 num_pos_matrice_RGB_moy = 0 #variable qui permet de savoir quelle matrice de la liste matrice_RGB_moy on doit remplir
 nbr_moyennage_matrice_symbole = 30 #nombre de moyennage de la matrice des symboles : 30 c'est bien
+real_symbol_length = 0.4 #longueur d'un symbole réel en cm
 
 for i in range(nbr_moyennage_matrice_symbole):
     matrice_circulaire_mire_symbole.append(mat_dim_mire) #on remplit la liste avec des matrices de 15*15
@@ -73,6 +74,19 @@ y_pos_mire_if_freeze = 0
 angle_mire_if_freeze = 0
 
 #####Fonctions#######################################################################################################################
+
+
+def angle_inclinaison_rectangle(pts): #fonction qui permet de trouver l'angle d'inclinaison d'un rectangle en passant par le calcul de son vecteur normal
+    #MARCHE PAS TRES BIEN
+    #points = np.array(pts, dtype="int32")
+
+    [vx,vy,x,y] = cv2.fitLine(pts,cv2.DIST_L2,0,0.01,0.01) #trouve de vecteur normal
+
+    inclination_x_deg = math.degrees(math.atan2(vx, 1)) #calcule l'angle d'inclinaison selon X en degrés
+    inclination_y_deg = math.degrees(math.atan2(vy, 1)) #calcule l'angle d'inclinaison selon Y en degrés
+
+    return inclination_x_deg, inclination_y_deg
+
 
 def moyennage_matrice_symbole(matrice): #fonction qui permet de faire un moyennage des symboles détectés sur plusieurs images
     
@@ -352,23 +366,27 @@ while True:
     points_et_type_et_rayon = np.array(np.column_stack((matrice_symbole_x, matrice_symbole_y, matrice_symbole_type, matrice_symbole_rayon)), dtype = np.int32)
     points = np.array(np.column_stack((matrice_symbole_x, matrice_symbole_y, )), dtype = np.int32)
 
-    treshold = long_trait_max * 25 #distance pour que les points soient considérés comme des vraies symboles : cercle de rayon de 20 fois la longueur moyenne des traits centré sur le centre de gravité de la mire
+    treshold = long_trait_max * 23 #distance pour que les points soient considérés comme des vraies symboles : cercle de rayon de 20 fois la longueur moyenne des traits centré sur le centre de gravité de la mire
 
     if points.size != 0: #si il y a des symboles détectés
         mean = np.mean(points, axis=0) #calcul de la moyenne des coordonnées des symboles
         distance = np.linalg.norm(points - mean, axis=1) #calcul de la distance entre chaque point et la moyenne
         good_points_et_type_et_rayon = points_et_type_et_rayon[distance < treshold] #on garde les points qui sont à moins de la distance treshold de la moyenne
         good_points = points[distance < treshold] 
-
+    
         if len(good_points_et_type_et_rayon) >=10: #si il y a au moins 10 symboles proches, on considère qu'on a trouvé la mire
             hull = cv2.convexHull(np.array(good_points))
-
             
-            #dessiner le rectangle minimum qui englobe les points de cqqqqontour
+            #dessiner le rectangle minimum qui englobe les points de contour
             rect = cv2.minAreaRect(good_points) 
 
+
             width_rectangle_mire, height_rectangle_mire = rect[1]
+           
             box = np.int0(cv2.boxPoints(rect))
+           # incli_X, incli_Y = angle_inclinaison_rectangle(box)
+            #print("incli_X = ", int(incli_X), "incli_Y = ", int(incli_Y))
+
     
             
         #TRI DES SYMBOLES & POSITION DE LA MIRE **************************************************************************************************************************************************************
@@ -381,9 +399,12 @@ while True:
 
                 
                 angle = int(rect[-1]) #angle du rectangle englobant
+                if angle == 90:
+                    angle = 0
                 arrow_length = 100
                 end_x = int(mean_x + arrow_length * np.cos(np.deg2rad(angle)))
                 end_y = int(mean_y + arrow_length * np.sin(np.deg2rad(angle)))   
+            cv2.circle(frame_symb_only, (mean_x, mean_y), int(treshold), (0,100, 0), 2) #dessiner un cercle sur l'image des symboles détectés 
         #CREATION DE LA MATRICE SYMBOLE CORRESPONDANT A LA MIRE ET AUX BONS SYMBOLES*******************************************************************************************************************************
 
     rotation_probable = 0
