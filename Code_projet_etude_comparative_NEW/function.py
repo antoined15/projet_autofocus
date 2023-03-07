@@ -10,13 +10,15 @@ import cv2
 def position_tourelle(X, Y):
 	#envoi sur le port série de la position demandée
 	#attente que le déplacement soit terminé
-	print("Tourelle déplacée : \tmoteur 1 = ", X, " ; \tmoteur 2 = ", Y)
+	#print("Tourelle déplacée : \tmoteur 1 = ", X, " ; \tmoteur 2 = ", Y)
+	pass
 
 
 def position_moteur_flou(pos_M):
 	#envoi de la position du moteur demandé
 	#attente que le déplacement soit terminé
-	print("Moteur autofocus déplacé : \tposition = ", pos_M)
+	#print("Moteur autofocus déplacé : \tposition = ", pos_M)
+	pass
 
 
 

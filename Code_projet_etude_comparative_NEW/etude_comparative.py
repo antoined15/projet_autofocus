@@ -6,16 +6,17 @@ import mplcursors
 
 ########INPUTS################################################################################
 Vmin_moteur_autofocus = 0
-Vmax_moteur_autofocus = 10
+Vmax_moteur_autofocus = 50
 pas_focus = 1
+
 
 color_frame = (0, 255, 0) #couleur du texte affiché sur l'image (vert)
 taille_text_frame = 0.5 #taille du texte affiché sur l'image
 
 cap = cv2.VideoCapture(0)
 
-nbre_image_moy_mesure = 10 #chaque résultat de mesure est la moyenne de nbre_image_moy_mesure images
-Position_tourelle = [[0, 0], [0, 45]]#, [45, 45]]#, [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
+nbre_image_moy_mesure = 5 #chaque résultat de mesure est la moyenne de nbre_image_moy_mesure images
+Position_tourelle = [[0, 0]]#, [0, 45], [45, 45], [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
 
 
 
@@ -23,7 +24,7 @@ Position_tourelle = [[0, 0], [0, 45]]#, [45, 45]]#, [45, 90], [90, 90]]#[[posX1,
 
 for pos_T in Position_tourelle:
 
-	print("---------------------")
+	#print("---------------------")
 	fct.position_tourelle(pos_T[0], pos_T[1])
 
 
@@ -56,8 +57,8 @@ for pos_T in Position_tourelle:
 	best_mean_X = best_mean_X_by_pos[best_index]
 	best_mean_Y = best_mean_Y_by_pos[best_index]
 
-	print("Meilleure position autofocus trouvé : ", best_focus)
-	print("Mire en position : ", best_mean_X, ";", best_mean_Y)
+	#print("Meilleure position autofocus trouvé : ", best_focus)
+	#print("Mire en position : ", best_mean_X, ";", best_mean_Y)
 
 	#cv2.destroyWindow('Contours & mire') #on ferme la fenêtre des contours
 
@@ -65,7 +66,7 @@ for pos_T in Position_tourelle:
 	fig = plt.figure()
 	
 	titre = "Recherche mire --> position de la tourelle : " + str(pos_T[0]) + ";" + str(pos_T[1])
-	plt.plot(best_focus_by_pos, bestnbr_symbole_by_pos)
+	plt.plot(best_focus_by_pos, bestnbr_symbole_by_pos, '+-')
 	plt.plot(best_focus, bestnbr_symbole, 'ro', label = 'Position du moteur autofocus optimal')
 	plt.grid()
 	plt.legend(loc = 'lower left')
@@ -73,11 +74,12 @@ for pos_T in Position_tourelle:
 	plt.ylabel('Nombre de symboles détectés')
 	plt.title(titre)
 	mplcursors.cursor( hover=True)#, annotations=True, annotation_kwargs=dict(fontsize=10, color='red'))
-	plt.show(block = False)
+	#plt.show(block = False)
 
 
 	if best_mean_X ==0 or best_mean_Y == 0: #si la mire n'a pas été trouvée, envoie une erreur
-		print("erreur : mire non trouvée")
+		#print("erreur : mire non trouvée")
+		pass
 	else:
 		sobel = []
 		laplacian = []
@@ -98,10 +100,10 @@ for pos_T in Position_tourelle:
 		fig = plt.figure()
 		#GRAPHES
 		titre = "Calcul flou --> position de la tourelle : " + str(pos_T[0]) + ";" + str(pos_T[1])
-		plt.plot(posit_M, sobel, label = 'sobel')
-		plt.plot(posit_M, laplacian, label = 'laplacian')
-		plt.plot(posit_M, canny, label = 'canny')
-		plt.plot(posit_M, moyenne_fm, label = 'moyenne')
+		plt.plot(posit_M, sobel,'+-',  label = 'sobel', )
+		plt.plot(posit_M, laplacian,'+-', label = 'laplacian')
+		plt.plot(posit_M, canny,'+-', label = 'canny')
+		plt.plot(posit_M, moyenne_fm,'+-', label = 'moyenne')
 		plt.legend()
 		plt.grid()
 		plt.xlabel('Position du moteur autofocus')
