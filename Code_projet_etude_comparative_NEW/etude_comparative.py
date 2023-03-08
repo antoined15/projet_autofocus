@@ -18,7 +18,7 @@ cap = cv2.VideoCapture(0)
 nbre_image_moy_mesure = 5 #chaque résultat de mesure est la moyenne de nbre_image_moy_mesure images
 Position_tourelle = [[0, 0]]#, [0, 45], [45, 45], [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
 
-
+type_tourelle = "arducam" # "arducam" ou "raspberry". Si autre chose, ne modifiera pas la position du moteur autofocus
 
 ########MAIN################################################################################
 
@@ -38,7 +38,7 @@ for pos_T in Position_tourelle:
 	
 	for pos_M in range(Vmin_moteur_autofocus, Vmax_moteur_autofocus + pas_focus, pas_focus): #Recherche de la position de la mire sur l'image globale
 
-		fct.position_moteur_flou(pos_M)
+		fct.position_moteur_flou(type_tourelle, pos_M)
 
 		nbr_symb_moy, box_mire_moy, mean_X_mire_moy, mean_Y_mire_moy, angle_mire_moy = fct.nbre_symboles_mires_detectes_moyenne(nbre_image_moy_mesure, cap, pos_T, pos_M, color_frame, taille_text_frame) #on calcule le nombre de symboles moyens sur nbre_image_moy_mesure images
 		best_focus_by_pos.append(pos_M)

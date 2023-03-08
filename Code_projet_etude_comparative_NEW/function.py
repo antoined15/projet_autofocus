@@ -14,12 +14,21 @@ def position_tourelle(X, Y):
 	pass
 
 
-def position_moteur_flou(pos_M):
-	#envoi de la position du moteur demandé
+def position_moteur_flou(type_tourelle,  pos_M):
+
+	match type_tourelle:
+		case "arducam":
+			#Programme de modification de la position du moteur autofocus pour les arducam
+			pass
+		case "raspberry":
+			#envoi sur le port série de la position demandée
+			pass
+		case _: #si type_tourelle n'est pas "arducam" ou "raspberry"
+			pass
+
 	#attente que le déplacement soit terminé
 	#print("Moteur autofocus déplacé : \tposition = ", pos_M)
 	pass
-
 
 
 
