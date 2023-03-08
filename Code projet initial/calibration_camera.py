@@ -80,11 +80,11 @@ else:
         Tx = round(translation_vectors[i][0][0], 3)
         Ty = round(translation_vectors[i][1][0], 3)
         Tz = round(translation_vectors[i][2][0], 3)
-        Rx = round(rotation_vectors[i][0][0], 3)
-        Ry = round(rotation_vectors[i][1][0], 3)
-        Rz = round(rotation_vectors[i][2][0], 3)
+        theta = round(rotation_vectors[i][0][0], 3)
+        phi = round(rotation_vectors[i][1][0], 3)
+        psi = round(rotation_vectors[i][2][0], 3)
 
-        print("Vecteurs de rotation : \t  Rx =", Rx, "\tRy =", Ry, "\tRz =", Rz)
+        print("Vecteurs de rotation : \t  \u03B8  =", theta, "\t\u03C6  =", phi, "\t\u03C8  =", psi)
         print("Vecteurs de translation : Tx =", Tx, "\tTy =", Ty, "\tTz =", Tz)
   
 
