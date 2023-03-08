@@ -29,6 +29,7 @@ else:
 
     # Parcourir toutes les images de calibration
     for fname in images:
+        print("Traitement de l'image : ", fname)
         # Charger l'image et la convertir en niveaux de gris
         img = cv2.imread(fname)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
