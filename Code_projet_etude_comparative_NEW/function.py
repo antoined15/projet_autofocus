@@ -14,14 +14,18 @@ def position_tourelle(X, Y):
 	pass
 
 
-def position_moteur_flou(type_tourelle,  pos_M):
+def position_moteur_flou(cap, type_tourelle,  pos_M):
 
+	tempo = 0.5 #temps d'attente entre chaque modification de la position du moteur autofocus
 	match type_tourelle:
 		case "arducam":
-			#Programme de modification de la position du moteur autofocus pour les arducam
-			pass
+			#Programme de modification de la position du moteur autofocus pour les arducam --> A TESTER
+			cap.set(cv2.CAP_PROP_AUTOFOCUS, pos_M)
+			time.sleep(tempo)	
 		case "raspberry":
-			#envoi sur le port série de la position demandée
+			#Programme de modification de la position du moteur autofocus pour les raspberry --> A TESTER
+			cap.set(cv2.CAP_PROP_AUTOFOCUS, pos_M)
+			time.sleep(tempo)	
 			pass
 		case _: #si type_tourelle n'est pas "arducam" ou "raspberry"
 			pass
