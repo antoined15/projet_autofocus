@@ -277,6 +277,27 @@ def comparison_mire(real_mire, matrice_symb): #fonction globale pour comparer la
 
 
 
+def solve_pnp(img, box): 
+
+    print(box)
+      
+
+    """""
+    start = 0
+    stop = 1
+    step = 0.01
+    x = stop
+    while x > start:
+        approx = cv2.approxPolyDP(box, x*cv2.arcLength(box*5, True), True)
+        if len(approx) == 4:
+            print("Nombre de cotés : ", len(approx), "\tx = ", x)
+            break
+        x -= step
+
+    """
+    #cv2.drawContours(img, [approx], 0, (255,255,255), 4) 
+
+
 
 def perspective_mire(image, box): #fonction pour transformer l'image de mire en perspective --> Sert à rien en tant que tel, mais stylé
 
@@ -377,6 +398,7 @@ while True:
         if len(good_points_et_type_et_rayon) >=10: #si il y a au moins 10 symboles proches, on considère qu'on a trouvé la mire
             hull = cv2.convexHull(np.array(good_points))
             
+            solve_pnp(frame, hull) #optionnel, affiche le polygone à 4 cotés englobant la mire
             #dessiner le rectangle minimum qui englobe les points de contour
             rect = cv2.minAreaRect(good_points) 
 
@@ -447,6 +469,7 @@ while True:
     if np.count_nonzero(matrice_symb_moyenne)>10 : #si il y a au moins 5 symboles
         rotation_probable = comparison_mire(Mire_reel, matrice_symb_moyenne)
         #perspective_mire(frame, box) #optionnel, affiche la perspective de la mire
+
     
     if  np.count_nonzero(matrice_symb_moyenne)>15 or mode ==2: #si il y a au moins 5 symboles ou si on est en mode 2 --> freeze de la position de la mire
         cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + int(angle)), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA) 
