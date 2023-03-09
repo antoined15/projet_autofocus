@@ -279,7 +279,7 @@ def comparison_mire(real_mire, matrice_symb): #fonction globale pour comparer la
 
 def solve_pnp(img, box): 
 
-    print(box)
+    #print(box)
       
 
     """""
