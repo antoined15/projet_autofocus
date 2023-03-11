@@ -2,10 +2,28 @@ import cv2
 import numpy as np
 import math
 
-def test_intersect_valide(points, intersect):
+def distance_min_seuil_intersect(points):
+
+    # Initialiser la plus grande distance à 0
+    max_distance = 0
+
+    # Parcourir la liste de points
+    for i in range(len(points) - 1):
+        # Calculer la distance entre les points i et i+1
+        distance = math.sqrt((points[i+1][0] - points[i][0])**2 + (points[i+1][1] - points[i][1])**2)
+        # Mettre à jour la plus grande distance si nécessaire
+        if distance > max_distance:
+            max_distance = distance
+
+    # Retourner la plus grande distance divisée par 4
+    max_distance = int(max_distance/4)
+    print("distance max = ", max_distance)
+
+    return max_distance
 
 
-    distance_min_seuil = 20 #distance minimale entre un point et un point d'intersection pour que l'intersection soit valide
+def test_intersect_valide(points, intersect, distance_min_seuil):
+
     X = intersect[0]
     Y = intersect[1]
     distance_min = float('inf')
@@ -46,6 +64,7 @@ def intersection(x1, y1, x2, y2, x3, y3, x4, y4):
 
 def rech_intersections(points):
 
+    seuil_test_intersect = distance_min_seuil_intersect(points) #distance minimale entre un point et un point d'intersection pour que l'intersection soit valide
     doublet_points = []
     pts_intersection = []
     for i in range(len(points)):
@@ -63,19 +82,19 @@ def rech_intersections(points):
         y4 = doublet_points[(i+2)%len(doublet_points)][1][1]
         x_int, y_int = intersection(x1, y1, x2, y2, x3, y3, x4, y4)
 
-        if (test_intersect_valide(points, (x_int, y_int))):
+        if (test_intersect_valide(points, (x_int, y_int), seuil_test_intersect)):
             pts_intersection.append([x_int, y_int])
 
         #test pour savoir si on garde les points d'intersection : si ils ont incohérents et ne ressemblent pas à des coins de la mire
 
-    print("longueur des points d'intersection : ", len(pts_intersection))
+    #print("nombre de points d'intersection valides : ", len(pts_intersection))
 
     return pts_intersection   # liste des points d'intersection
 
 
-img = np.zeros((500, 500, 3), np.uint8)
+img = np.zeros((300, 300, 3), np.uint8)
 
-points = np.array([[100, 105], [80, 200], [200, 200],  [220, 190] ,[220, 110],  [200, 103]])
+points = np.array([[100, 105], [80, 200], [200, 200],  [220, 180] ,[220, 110],  [200, 103]])
 n_points = len(points)
 pts_intersect = rech_intersections(points)
 
