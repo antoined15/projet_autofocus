@@ -1,17 +1,8 @@
 import cv2
 import numpy as np
 import math
+import random
 
-
-
-
-def polyg_4C_enveloppe_convexe(points):
-
-    hull = cv2.convexHull(np.array(points))
-
-    if len(hull) == 4:
-        return hull, True
-    return hull, False
 
 def distance_min_seuil_intersect(points):
 
@@ -27,7 +18,7 @@ def distance_min_seuil_intersect(points):
             max_distance = distance
 
     # Retourner la plus grande distance divisée par 4
-    max_distance = int(max_distance/4)
+    max_distance = int(max_distance/5)
     #print("distance max = ", max_distance)
 
     return max_distance
@@ -65,7 +56,7 @@ def intersection(x1, y1, x2, y2, x3, y3, x4, y4):
     det = a1 * b2 - a2 * b1
     # Si le dénominateur est égal à zéro, les droites sont parallèles
     if det == 0:
-        return None
+        return None, None
     # Calculer les coordonnées (x, y) du point d'intersection
     x = (b2 * c1 - b1 * c2) / det
     y = (a1 * c2 - a2 * c1) / det
@@ -91,51 +82,105 @@ def rech_intersections(points):
         y3 = doublet_points[(i+2)%len(doublet_points)][0][1]
         x4 = doublet_points[(i+2)%len(doublet_points)][1][0]
         y4 = doublet_points[(i+2)%len(doublet_points)][1][1]
+  
         x_int, y_int = intersection(x1, y1, x2, y2, x3, y3, x4, y4)
+        if (x_int != None) and (y_int != None):
+            if (test_intersect_valide(points, (x_int, y_int), seuil_test_intersect)):
+                pts_intersection.append([int(x_int), int(y_int)])
 
-        if (test_intersect_valide(points, (x_int, y_int), seuil_test_intersect)):
-            pts_intersection.append([int(x_int), int(y_int)])
-
-        #test pour savoir si on garde les points d'intersection : si ils ont incohérents et ne ressemblent pas à des coins de la mire
-
-    #print("nombre de points d'intersection valides : ", len(pts_intersection))
 
     return pts_intersection   # liste des points d'intersection
 
 
-img = np.zeros((300, 300, 3), np.uint8)
 
-points = [[100, 105], [80, 200], [200, 200],  [220, 180] ,[220, 110],  [200, 103]]
-n_points = len(points)
-
-
-#dessiner les points entre les lignes successives : 
-for i in range(n_points):
-    cv2.line(img, (int(points[i][0]), int(points[i][1])), (int(points[(i+1)%n_points][0]), int(points[(i+1)%n_points][1])), (0, 255, 0), 1)
-    cv2.circle(img, (int(points[i][0]), int(points[i][1])), 3, (255, 0, 255), -1)
-
-pts_intersect = rech_intersections(points)
-
-#dessiner les points d'intersection
-for pts in pts_intersect:
-    cv2.circle(img, (int(pts[0]), int(pts[1])), 3, (0, 0, 255), -1)
+def algo_4cotes(points, nbr_pts_polyg_before = 0):
+    img = np.zeros((400, 400, 3), np.uint8)
+    global incr
+    global polyg
+    incr +=1
+    n_points = len(points)
 
 
-for pt in pts_intersect:
-    points.append(pt)
+    
 
-#calculer l'enveloppe convex du nouveau polygone
-polyg, success_4side =  polyg_4C_enveloppe_convexe(points)
+    pts_intersect = rech_intersections(points)
 
-if success_4side: #si on a un polygone de 4 points : 
-    print("polygone à 4 cotés trouvés ! ")
+
+    for pt in pts_intersect:
+        #cv2.circle(img, (int(pt[0]), int(pt[1])), 3, (0, 0, 255), -1)
+        pass
+
+    for pt in pts_intersect:
+        points.append(pt)
+
+    polyg =  cv2.convexHull(np.array(points))
+    polyg = [[sublist[0][0], sublist[0][1]] for sublist in polyg]
     for i in range(len(polyg)):
-        cv2.line(img, (int(polyg[i][0][0]), int(polyg[i][0][1])), (int(polyg[(i+1)%len(polyg)][0][0]), int(polyg[(i+1)%len(polyg)][0][1])), (255, 255, 255), 1)
+        cv2.line(img, (int(polyg[i][0]), int(polyg[i][1])), (int(polyg[(i+1)%len(polyg)][0]), int(polyg[(i+1)%len(polyg)][1])), (255, 255, 255), 1)
+        cv2.circle(img, (int(polyg[i][0]), int(polyg[i][1])), 3, (255, 100, 0), -1)
+    #dessiner les points entre les lignes successives : 
+    for i in range(len(points_init)):
+        cv2.circle(img, (int(points_init[i][0]), int(points_init[i][1])), 3, (255, 0, 255), -1)
+
+    print("nombre de points du polygone résultant : ", len(polyg))
+    cv2.imshow('img ' + str(incr), img)
+    cv2.waitKey()
+    
+    if len(polyg) > 4 :
+            if len(polyg) != nbr_pts_polyg_before:
+                nbr_pts_polyg_before = len(polyg)
+                algo_4cotes(polyg,nbr_pts_polyg_before)
+                
+
+def approxpoly(points):
+    epsilon = 0.1 * cv2.arcLength(np.array(points), True)
+    approx = cv2.approxPolyDP(np.array(points), epsilon, True)
+    return approx
 
 
 
 
-cv2.imshow('img', img)
-cv2.waitKey()
+global incr #variable globale pour l'incrément de la position des points
+global polyg #variable globale pour le polygone, global car sera utilisé par les récursions
+incr = 0
+global points_init
+points = [[100, 100], [100, 200], [120, 220],[150, 220], [170, 210],  [180, 220], [200, 200], [175, 150], [180, 175], [200, 100]]
+points_init = points
+#nombre de poits aléatoires
+n = 100
+##points = []
+#for i in range(n):
+    #points.append([random.randint(150, 300), random.randint(150, 300)])
+
+algo_4cotes(points)
+print("polyg : ", polyg)
+polyg_approx = approxpoly(polyg)
+
+print("nombre de points du polygone approximé : ", len(polyg_approx))#nombre de points du polygone approximé
+print("polyg approx : ", polyg_approx)
+
+
+#affichage du polygone approximé
+img = np.zeros((400, 400, 3), np.uint8)
+
+#affichage despoints initiaux : 
+for i in range(len(points_init)):
+    cv2.circle(img, (int(points_init[i][0]), int(points_init[i][1])), 3, (255, 0, 255), -1)
+
+cv2.drawContours(img, [polyg_approx], 0, (0, 0, 255), 1)
+
+#afichage des points du polygone approximé
+for i in range(len(polyg_approx)):
+    cv2.circle(img, (int(polyg_approx[i][0][0]), int(polyg_approx[i][0][1])), 3, (0, 255, 0), -1)
+
+    
+
+cv2.imshow('img approx', img)
+
+cv2.waitKey(0)
+#arrreter quand on appuie sur une touche
+cv2.waitKey(1) == ord('q')
+
+
 
 
