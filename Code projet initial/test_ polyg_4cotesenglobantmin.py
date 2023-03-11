@@ -18,13 +18,12 @@ points = np.random.randint(0, 500, size=(n_points, 2))
 for i in range(n_points - 1):
     pt1 = tuple(points[i])
     pt2 = tuple(points[i + 1])
-    cv2.line(img, pt1, pt2, (0, 0, 255), 2)
+    cv2.line(img, pt1, pt2, (0, 255, 255), 2)
 
 # Dessiner la ligne reliant le dernier point au premier point
 pt1 = tuple(points[-1])
 pt2 = tuple(points[0])
-cv2.line(img, pt1, pt2, (0, 0, 255), 2)
-
+cv2.line(img, pt1, pt2, (0, 255, 255), 2)
 
 def segment_by_angle_kmeans(lines, k=10, **kwargs):
     """
@@ -64,7 +63,7 @@ def segment_by_angle_kmeans(lines, k=10, **kwargs):
 
     segmented = list(segmented.values())
     print("Segmented lines into two groups: %d, %d" % (len(segmented[0]), len(segmented[1])))
-
+    print(segmented)
     return segmented
 
 
