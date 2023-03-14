@@ -9,11 +9,25 @@
 import cv2
 import numpy as np
 import glob
+import tkinter as tk
+from tkinter import filedialog
+import os
+
+
+chemin_dossier = "calibration_camera/arducam_64mp/"
+
+images = glob.glob("calibration_camera/arducam_64mp/1.jpg")
+print("Les images sont : ", images)
+#afficher les images
+for fname in images:
+        img = cv2.imread(fname)
+        cv2.imshow('image',img)
 
 # Créer une liste des images de calibration
-images = glob.glob('Code projet initial/arducam_64mp/[1-5].jpg')
 
-if len(images)==0:
+
+
+if len(images) == 0  :
     print("Aucune image trouvée")
 else:   
     print("les images sont : ", images)
@@ -90,10 +104,10 @@ else:
 
 
 
-mean_error = 0
-for i in range(len(obj_points)):
-    imgpoints2, _ = cv2.projectPoints(obj_points[i], rotation_vectors[i], translation_vectors[i], camera_matrix, distorsion_coefficients)
-    error = cv2.norm(img_points[i],imgpoints2, cv2.NORM_L2)/len(imgpoints2)
-    mean_error += error
+    mean_error = 0
+    for i in range(len(obj_points)):
+        imgpoints2, _ = cv2.projectPoints(obj_points[i], rotation_vectors[i], translation_vectors[i], camera_matrix, distorsion_coefficients)
+        error = cv2.norm(img_points[i],imgpoints2, cv2.NORM_L2)/len(imgpoints2)
+        mean_error += error
 
-print ("\n\n\nerreur totale de calibration, plus c'est proche de 0, mieux c'est : ", round(mean_error/len(obj_points), 3))
+    print ("\n\n\nerreur totale de calibration, plus c'est proche de 0, mieux c'est : ", round(mean_error/len(obj_points), 3))
