@@ -5,7 +5,6 @@
 #les mettre dans le dossier calibration_images
 #faire tourner le programme
 
-
 import cv2
 import numpy as np
 import glob
@@ -13,27 +12,23 @@ import tkinter as tk
 from tkinter import filedialog
 import os
 
-
-chemin_dossier = "calibration_camera/arducam_64mp/"
-
-images = glob.glob("calibration_camera/arducam_64mp/1.jpg")
-print("Les images sont : ", images)
-#afficher les images
-for fname in images:
-        img = cv2.imread(fname)
-        cv2.imshow('image',img)
-
-# Créer une liste des images de calibration
+# Définir la taille de la grille de calibration (nombre de points internes)
+# Si les valeurs fx et fy sont très différentes, peut être que la grille de calibration n'est pas (X, Y) mais (Y, X)
+pattern_size = (5, 8)
 
 
+########CHOIX DES IMAGES DE CALIBRATION############################################################################################################
+initial_dir = os.path.dirname(os.path.abspath(__file__)) 
+root = tk.Tk()
+root.withdraw()
+image_path = filedialog.askopenfilenames(initialdir = initial_dir, title = "Sélectrionnez les images de calibration", filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
 
-if len(images) == 0  :
-    print("Aucune image trouvée")
+if len(image_path) ==0  :
+    print("Aucune image sélectionnée")
 else:   
-    print("les images sont : ", images)
+    print("les images sont : ", image_path)
 
-    # Définir la taille de la grille de calibration (nombre de points internes)
-    pattern_size = (5, 8)
+#######DETERMINATION DES CARACTERISTIQUES DE LA CAMERA#############################################################################
 
     # Créer un tableau de stockage pour les points de la grille de calibration
     obj_points = []
@@ -44,7 +39,7 @@ else:
     objp[:, :2] = np.mgrid[0:pattern_size[0], 0:pattern_size[1]].T.reshape(-1, 2)
 
     # Parcourir toutes les images de calibration
-    for fname in images:
+    for fname in image_path:
         print("Traitement de l'image : ", fname)
         # Charger l'image et la convertir en niveaux de gris
         img = cv2.imread(fname)
@@ -67,7 +62,8 @@ else:
     # Obtenir les paramètres de la caméra en effectuant la calibration de caméra
     ret, camera_matrix, distorsion_coefficients, rotation_vectors, translation_vectors = cv2.calibrateCamera(obj_points, img_points, gray.shape[::-1], None, None)
 
-    # Afficher les paramètres de la caméra
+
+#######AFFICHAGE DES RESULTATS#############################################################################
 
     fx = round(camera_matrix[0][0], 3)
     fy = round(camera_matrix[1][1], 3)
@@ -89,7 +85,7 @@ else:
 
     print("\n\n********** Caractéristiques spécifiques à chaque image**********\n")
 
-    for i in range(len(images)):
+    for i in range(len(image_path)):
         print("\nImage n°", i+1)
         Tx = round(translation_vectors[i][0][0], 3)
         Ty = round(translation_vectors[i][1][0], 3)
@@ -102,12 +98,10 @@ else:
         print("Vecteurs de translation : Tx =", Tx, "\tTy =", Ty, "\tTz =", Tz)
   
 
-
-
     mean_error = 0
     for i in range(len(obj_points)):
         imgpoints2, _ = cv2.projectPoints(obj_points[i], rotation_vectors[i], translation_vectors[i], camera_matrix, distorsion_coefficients)
         error = cv2.norm(img_points[i],imgpoints2, cv2.NORM_L2)/len(imgpoints2)
         mean_error += error
 
-    print ("\n\n\nerreur totale de calibration, plus c'est proche de 0, mieux c'est : ", round(mean_error/len(obj_points), 3))
+    print ("\n\n\nErreur totale de calibration, plus la valeur est proche de 0, mieux c'est : ", round(mean_error/len(obj_points), 3))
