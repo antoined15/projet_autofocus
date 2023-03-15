@@ -167,7 +167,7 @@ def comparison_mire(real_mire, matrice_symb): #fonction globale pour comparer la
 def detect_contours(frame, contour_show = False):
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) #convertir en noir et blanc
-    canny_image = cv2.Canny(frame, 50,150) #Appliquer un filtre de Canny pour détecter les contours
+    canny_image = cv2.Canny(gray, 50,150) #Appliquer un filtre de Canny pour détecter les contours
     contours, _ = cv2.findContours(canny_image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) #trouver les contours de l'image avec le filtre de Canny
     canny_image_cont = cv2.cvtColor(canny_image, cv2.COLOR_GRAY2RGB) #convertir en couleur pour pouvoir afficher les contours en couleur --> frame avec contours
     if (contour_show):

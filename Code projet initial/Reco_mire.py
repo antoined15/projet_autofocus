@@ -139,7 +139,7 @@ while True:
 
     #détection des contours
 
-    contours = fct.detect_contours(frame, contour_show = False) #détection des contours avec canny
+    contours = fct.detect_contours(frame, contour_show = True) #détection des contours avec canny
     
     #DETECTION DES CERCLES ************************************************************************************************************************************************************************************
     for cnt in contours:    
