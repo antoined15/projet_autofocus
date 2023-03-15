@@ -1,0 +1,6 @@
+Arduino from source 1.8.19 arm 64 bits
+
+
+pip install opencv-python matplotlib picamera2
+
+Driver camera
