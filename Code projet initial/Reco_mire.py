@@ -14,7 +14,11 @@ import cv2
 import Reco_mire_fct as fct
 import polig_4_cotes_intersect as polig_4C
 
-cap = cv2.VideoCapture(0)
+from picamera2 import Picamera2
+
+picam2 = Picamera2()
+picam2.configure(picam2.create_preview_configuration(main={"format":'RGB888',"size":(640,480)}))
+picam2.start()
 
 #####Variables globales##############################################################################################################
 mat_dim_mire = np.zeros((15,15)) #Dimensions de la matrice
@@ -130,8 +134,12 @@ while True:
     mean_y = 0 #moyenne des coordonnées y des symboles de la mire trouvés
     angle = 0 #angle de rotation de la mire
     #LIGNE CODE DEBUT************************************************************************************************************************************************************************************
+    
+    #prendre une image
+    frame = picam2.capture_array()
 
-    ret, frame = cap.read() #prend une image
+    if frame is None:
+        break
 
     #creation des images de travail
     frame_orig  = frame.copy() #copier l'image pour pouvoir la réutiliser pour la mire avec le masque
@@ -345,6 +353,6 @@ while True:
     if cv2.waitKey(1) == ord('q'): #waitkey(0) --> only one frame, waitkey(1) --> video 
         break #si q est appuyé, on quitte la boucle
 
-cap.release()
 cv2.destroyAllWindows()
+picam2.stop()
 
