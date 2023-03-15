@@ -26,7 +26,7 @@ Date de la calibration : 15/3/2023 : 15h54min
 ********************Resultats de l'etude : 
 
 Matrice intrinseque : 
-	Longeur focale en x : 1780.85611 [pixels]
+	Longeur focale en x : 1780.85611 [pixels] 
 	Longeur focale en y : 1780.92128 [pixels]
 	Position du point principal sur le capteur: X = 959.80312	Y = 546.99093 [pixels]
 

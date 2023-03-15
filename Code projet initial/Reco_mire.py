@@ -14,11 +14,17 @@ import cv2
 import Reco_mire_fct as fct
 import polig_4_cotes_intersect as polig_4C
 
-from picamera2 import Picamera2
+appareil_utilise = "webcam" #webcam ou camera
 
-picam2 = Picamera2()
-picam2.configure(picam2.create_preview_configuration(main={"format":'RGB888',"size":(640,480)}))
-picam2.start()
+if appareil_utilise == "camera":
+    from picamera2 import Picamera2
+
+    picam2 = Picamera2()
+    picam2.configure(picam2.create_preview_configuration(main={"format":'RGB888',"size":(640,480)}))
+    picam2.start()
+
+else :
+    cap = cv2.VideoCapture(0)
 
 #####Variables globales##############################################################################################################
 mat_dim_mire = np.zeros((15,15)) #Dimensions de la matrice
@@ -136,7 +142,10 @@ while True:
     #LIGNE CODE DEBUT************************************************************************************************************************************************************************************
     
     #prendre une image
-    frame = picam2.capture_array()
+    if appareil_utilise == "camera":
+        frame = picam2.capture_array()
+    elif appareil_utilise == "webcam":
+        ret, frame = cap.read()
 
     if frame is None:
         break
@@ -354,5 +363,8 @@ while True:
         break #si q est appuyé, on quitte la boucle
 
 cv2.destroyAllWindows()
-picam2.stop()
+if appareil_utilise == "webcam":
+    cap.release()
+elif appareil_utilise == "camera":
+    picam2.stop()
 
