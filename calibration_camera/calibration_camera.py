@@ -11,6 +11,7 @@ import glob
 import tkinter as tk
 from tkinter import filedialog
 import os
+import datetime
 
 # Définir la taille de la grille de calibration (nombre de points internes)
 # Si les valeurs fx et fy sont très différentes, peut être que la grille de calibration n'est pas (X, Y) mais (Y, X)
@@ -107,3 +108,32 @@ else:
         mean_error += error
 
     print ("\n\n\nErreur totale de calibration, plus la valeur est proche de 0, mieux c'est : ", round(mean_error/len(obj_points), 3))
+
+
+######SAUVEGARDE DES RESULTATS#############################################################################
+
+file_save_path = filedialog.asksaveasfilename(initialdir = initial_dir, title = "Sauvegarder les résultats", filetypes = (("text files","*.txt"),("all files","*.*")))
+
+text = ""
+actual_time = datetime.datetime.now()
+text = text + "Date de la calibration : " + str(actual_time.day) + "/" + str(actual_time.month) + "/" + str(actual_time.year) + str(actual_time.hour)+ "h" + str(actual_time.minute) +   "\n\n"
+
+text = text + "Images utilisees pour la calibration : \n"
+for i in range(len(image_path)):
+    text = text + "\t" + image_path[i] + "\n"
+
+text = text + "\nMatrice caracteristique : \tfx = " + str(fx) + "\tfy = " + str(fy) + "\tcx = " + str(cx) + "\tcy = " + str(cy) + "\n"
+text = text + "Coefficients de distorsion : k1 = " + str(k1) + "\tk2 = " + str(k2) + "\tp1 = " + str(p1) + "\tp2 = " + str(p2) + "\tk3 = " + str(k3) + "\n\n"
+
+text = text + "Caracteristiques specifiques pour chaque image : \n"
+
+for i in range(len(image_path)):
+    text = text + "\nImage " + str(i+1) + ":"
+    text = text + "\nVecteurs de rotation : \t  theta  = " + str(theta) + "\t\tphi  = " + str(phi) + "\t\tpsi  = " + str(psi) 
+    text = text + "\nVecteurs de translation : Tx = " + str(Tx) + "\t\t\tTy = " + str(Ty) + "\t\t\tTz = " + str(Tz) + "\n"
+
+try :
+    with open(file_save_path + ".txt", "w") as f:
+        f.write(text)
+except:
+    print("Erreur dans l'enregistrement du ficher")
