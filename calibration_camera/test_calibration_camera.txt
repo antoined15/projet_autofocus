@@ -1,0 +1,54 @@
+Date de la calibration : 15/3/2023 : 15h26min
+
+********************Images utilisees pour la calibration : 
+	C:/Users/adott/Documents/GitHub/projet_autofocus/calibration_camera/arducam_64mp/1.jpg
+	C:/Users/adott/Documents/GitHub/projet_autofocus/calibration_camera/arducam_64mp/2.jpg
+	C:/Users/adott/Documents/GitHub/projet_autofocus/calibration_camera/arducam_64mp/3.jpg
+	C:/Users/adott/Documents/GitHub/projet_autofocus/calibration_camera/arducam_64mp/4.jpg
+	C:/Users/adott/Documents/GitHub/projet_autofocus/calibration_camera/arducam_64mp/5.jpg
+
+********************Donnees d'entree : 
+	Taille de l'image : 4624x3472 [pixels]
+	Taille du capteur : 7.4x5.56 [mm]
+	Longueur du damier : 6
+	Largeur du damier : 9
+
+********************Resultats de l'etude : 
+
+Matrice intrinseque : 
+	Longeur focale en x : 3409.82613[pixels]
+	Longeur focale en y : 3413.41917[pixels]
+	Position du point principal sur le capteur: X = 2275.99203	Y = 1718.94314 [pixels]
+
+	Centre de l'image en x : 2275.99203[pixels]
+	Centre de l'image en y : 1718.94314[pixels]
+	Coefficients de distorsion : k1 = 0.20412	k2 = -0.83648	p1 = 0.00013	p2 = -0.00115	k3 = 0.87397
+
+	Angle de vue en sortie en X : 68.27365 [degres]
+	Angle de vue en sortie en Y : 53.91313 [degres]
+	Longueur focale de la lentille : 5.4569 [mm]
+	Rapport d'aspect : 1.00105
+
+	Position du point principal sur le capteur: X = 3.642	Y = 2.753 [mm]
+
+********************Caracteristiques specifiques pour chaque image : 
+
+Image 1:
+	Vecteurs de rotation : 	  theta  = -0.508		phi  = 0.318		psi  = -1.539
+	Vecteurs de translation : Tx = -3.098			Ty = 3.831			Tz = 13.544
+
+Image 2:
+	Vecteurs de rotation : 	  theta  = -0.508		phi  = 0.318		psi  = -1.539
+	Vecteurs de translation : Tx = -3.098			Ty = 3.831			Tz = 13.544
+
+Image 3:
+	Vecteurs de rotation : 	  theta  = -0.508		phi  = 0.318		psi  = -1.539
+	Vecteurs de translation : Tx = -3.098			Ty = 3.831			Tz = 13.544
+
+Image 4:
+	Vecteurs de rotation : 	  theta  = -0.508		phi  = 0.318		psi  = -1.539
+	Vecteurs de translation : Tx = -3.098			Ty = 3.831			Tz = 13.544
+
+Image 5:
+	Vecteurs de rotation : 	  theta  = -0.508		phi  = 0.318		psi  = -1.539
+	Vecteurs de translation : Tx = -3.098			Ty = 3.831			Tz = 13.544
