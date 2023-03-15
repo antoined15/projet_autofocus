@@ -21,12 +21,12 @@ pattern_size = (5, 8)
 initial_dir = os.path.dirname(os.path.abspath(__file__)) 
 root = tk.Tk()
 root.withdraw()
-image_path = filedialog.askopenfilenames(initialdir = initial_dir, title = "Sélectrionnez les images de calibration", filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
+image_path = filedialog.askopenfilenames(initialdir = initial_dir, title = "Sélectionnez les images de calibration", filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
 
 if len(image_path) ==0  :
     print("Aucune image sélectionnée")
 else:   
-    print("les images sont : ", image_path)
+    print("les images sont : ", image_path, "\n")
 
 #######DETERMINATION DES CARACTERISTIQUES DE LA CAMERA#############################################################################
 
@@ -83,7 +83,7 @@ else:
 
     print("Coefficients de distorsion : k1 =", k1, "\tk2 =", k2, "\tp1 =", p1, "\tp2 =", p2, "\tk3 =", k3)
 
-    print("\n\n********** Caractéristiques spécifiques à chaque image**********\n")
+    print("\n\n********** Caractéristiques spécifiques à chaque images**********\n")
 
     for i in range(len(image_path)):
         print("\nImage n°", i+1)
