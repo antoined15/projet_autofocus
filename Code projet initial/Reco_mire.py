@@ -276,29 +276,6 @@ def comparison_mire(real_mire, matrice_symb): #fonction globale pour comparer la
     return rot_probable
 
 
-
-def solve_pnp(img, box): 
-
-    #print(box)
-      
-
-    """""
-    start = 0
-    stop = 1
-    step = 0.01
-    x = stop
-    while x > start:
-        approx = cv2.approxPolyDP(box, x*cv2.arcLength(box*5, True), True)
-        if len(approx) == 4:
-            print("Nombre de cotés : ", len(approx), "\tx = ", x)
-            break
-        x -= step
-
-    """
-    #cv2.drawContours(img, [approx], 0, (255,255,255), 4) 
-
-
-
 def perspective_mire(image, box): #fonction pour transformer l'image de mire en perspective --> Sert à rien en tant que tel, mais stylé
 
     pts1 = np.float32([box[0], box[1], box[3], box[2]])
