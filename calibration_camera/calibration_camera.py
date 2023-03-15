@@ -60,25 +60,27 @@ else:
     cv2.destroyAllWindows()
 
     # Obtenir les paramètres de la caméra en effectuant la calibration de caméra
-    ret, camera_matrix, distorsion_coefficients, rotation_vectors, translation_vectors = cv2.calibrateCamera(obj_points, img_points, gray.shape[::-1], None, None)
+    size = gray.shape[::-1]
+    print("Taille de l'image : ", size)
+    ret, camera_matrix, distorsion_coefficients, rotation_vectors, translation_vectors = cv2.calibrateCamera(obj_points, img_points, size, None, None)
 
 
 #######AFFICHAGE DES RESULTATS#############################################################################
 
-    fx = round(camera_matrix[0][0], 3)
-    fy = round(camera_matrix[1][1], 3)
-    cx = round(camera_matrix[0][2], 3)
-    cy = round(camera_matrix[1][2], 3)
-    k1 = round(distorsion_coefficients[0][0], 3)
-    k2 = round(distorsion_coefficients[0][1], 3)
-    p1 = round(distorsion_coefficients[0][2], 3)
-    p2 = round(distorsion_coefficients[0][3], 3)
-    k3 = round(distorsion_coefficients[0][4], 3)
+    fx = round(camera_matrix[0][0], 5)
+    fy = round(camera_matrix[1][1], 5)
+    cx = round(camera_matrix[0][2], 5)
+    cy = round(camera_matrix[1][2], 5)
+    k1 = round(distorsion_coefficients[0][0], 5)
+    k2 = round(distorsion_coefficients[0][1], 5)
+    p1 = round(distorsion_coefficients[0][2], 5)
+    p2 = round(distorsion_coefficients[0][3], 5)
+    k3 = round(distorsion_coefficients[0][4], 5)
 
     print("\n\n********** Caractéristiques de la caméra**********\n")
-    print("\nMatrice caractéristique : |fx = ", fx, "|0\t\t", " |cx = ",cx,
-                                    "|\n\t\t\t  |0\t\t  |fy = ", fy, "|cy = ", cy,
-                                    "|\n\t\t\t  |0\t\t  |0\t\t", " |1\t\t  |\n")
+    print("\nMatrice caractéristique : |fx = ", fx, "|0\t\t", "     |cx = ",cx,
+                                    "|\n\t\t\t  |0\t\t    |fy = ", fy, "|cy = ", cy,
+                                    "|\n\t\t\t  |0\t\t    |0\t\t", "     |1\t\t|\n")
 
 
     print("Coefficients de distorsion : k1 =", k1, "\tk2 =", k2, "\tp1 =", p1, "\tp2 =", p2, "\tk3 =", k3)
