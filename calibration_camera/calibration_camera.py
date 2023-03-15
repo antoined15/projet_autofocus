@@ -14,7 +14,7 @@ import datetime
 
 # Définir la taille de la grille de calibration (nombre de points internes)
 # Si les valeurs fx et fy sont très différentes, peut être que la grille de calibration n'est pas (X, Y) mais (Y, X)
-pattern_size = (5, 8)
+pattern_size = (8, 8)
 
 # Définir la taille de l'ouverture de la caméra (en mm)
 #arducam64mp : 7.4 x 5.56 mm
@@ -147,11 +147,9 @@ text = text + "\tLargeur du damier : " + str(pattern_size[1] + 1) + "\n"
 
 text = text + "\n********************Resultats de l'etude : \n"
 text = text + "\nMatrice intrinseque : \n"
-text = text + "\tLongeur focale en x : " + str(fx) + "[pixels]\n"
-text = text + "\tLongeur focale en y : " + str(fy) + "[pixels]\n"
+text = text + "\tLongeur focale en x : " + str(fx) + " [pixels]\n"
+text = text + "\tLongeur focale en y : " + str(fy) + " [pixels]\n"
 text = text + "\tPosition du point principal sur le capteur: X = " + str(cx) + "\tY = " + str(str(cy)) + " [pixels]\n\n"
-text = text + "\tCentre de l'image en x : " + str(cx) + "[pixels]\n"
-text = text + "\tCentre de l'image en y : " + str(cy) + "[pixels]\n"
 text = text + "\tCoefficients de distorsion : k1 = " + str(k1) + "\tk2 = " + str(k2) + "\tp1 = " + str(p1) + "\tp2 = " + str(p2) + "\tk3 = " + str(k3) + "\n\n"
 text = text + "\tAngle de vue en sortie en X : " + str(fov_x) + " [degres]\n"
 text = text + "\tAngle de vue en sortie en Y : " + str(fov_y) + " [degres]\n"
@@ -159,12 +157,12 @@ text = text + "\tLongueur focale de la lentille : " + str(focal_length) + " [mm]
 text = text + "\tRapport d'aspect : " + str(aspect_ratio) + "\n\n"
 text = text + "\tPosition du point principal sur le capteur: X = " + str(round(principal_point[0], 3)) + "\tY = " + str(round(principal_point[1], 3)) + " [mm]\n\n"
 
-text = text + "********************Caracteristiques specifiques pour chaque image : \n"
+text = text + "********************Caracteristiques specifiques pour chaque image : --> matrice extrinseque \n"
 
 for i in range(len(image_path)):
     text = text + "\nImage " + str(i+1) + ":"
-    text = text + "\n\tVecteurs de rotation : \t  theta  = " + str(theta) + "\t\tphi  = " + str(phi) + "\t\tpsi  = " + str(psi) 
-    text = text + "\n\tVecteurs de translation : Tx = " + str(Tx) + "\t\t\tTy = " + str(Ty) + "\t\t\tTz = " + str(Tz) + "\n"
+    text = text + "\n\tVecteurs de rotation [pixels] : \t  theta  = " + str(theta) + "\t\tphi  = " + str(phi) + "\t\tpsi  = " + str(psi) 
+    text = text + "\n\tVecteurs de translation [pixels] : Tx = " + str(Tx) + "\t\t\tTy = " + str(Ty) + "\t\t\tTz = " + str(Tz) + "\n"
 
 try :
     with open(file_save_path + ".txt", "w") as f:
