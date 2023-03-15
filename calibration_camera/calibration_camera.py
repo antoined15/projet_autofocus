@@ -20,8 +20,8 @@ pattern_size = (8, 8)
 #arducam64mp : 7.4 x 5.56 mm
 #arducam16mp : 5.680 x 4.265 mm
 #raspberry pi camera v3 : 6.4512 x 4.2768 mm
-aperture_width = 7.4 #en mm
-aperture_height = 5.56 #en mm
+aperture_width = 5.680 #en mm
+aperture_height = 4.265 #en mm
 
 ########CHOIX DES IMAGES DE CALIBRATION############################################################################################################
 initial_dir = os.path.dirname(os.path.abspath(__file__)) 
@@ -160,6 +160,12 @@ text = text + "\tPosition du point principal sur le capteur: X = " + str(round(p
 text = text + "********************Caracteristiques specifiques pour chaque image : --> matrice extrinseque \n"
 
 for i in range(len(image_path)):
+    Tx = round(translation_vectors[i][0][0], 3)
+    Ty = round(translation_vectors[i][1][0], 3)
+    Tz = round(translation_vectors[i][2][0], 3)
+    theta = round(rotation_vectors[i][0][0], 3)
+    phi = round(rotation_vectors[i][1][0], 3)
+    psi = round(rotation_vectors[i][2][0], 3)
     text = text + "\nImage " + str(i+1) + ":"
     text = text + "\n\tVecteurs de rotation [pixels] : \t  theta  = " + str(theta) + "\t\tphi  = " + str(phi) + "\t\tpsi  = " + str(psi) 
     text = text + "\n\tVecteurs de translation [pixels] : Tx = " + str(Tx) + "\t\t\tTy = " + str(Ty) + "\t\t\tTz = " + str(Tz) + "\n"

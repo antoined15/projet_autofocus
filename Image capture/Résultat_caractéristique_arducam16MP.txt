@@ -1,4 +1,4 @@
-Date de la calibration : 15/3/2023 : 15h41min
+Date de la calibration : 15/3/2023 : 15h54min
 
 ********************Images utilisees pour la calibration : 
 	C:/Users/adott/Documents/GitHub/projet_autofocus/Image capture/16mpx/image_1.jpg
@@ -26,8 +26,8 @@ Date de la calibration : 15/3/2023 : 15h41min
 ********************Resultats de l'etude : 
 
 Matrice intrinseque : 
-	Longeur focale en x : 1780.85611[pixels]
-	Longeur focale en y : 1780.92128[pixels]
+	Longeur focale en x : 1780.85611 [pixels]
+	Longeur focale en y : 1780.92128 [pixels]
 	Position du point principal sur le capteur: X = 959.80312	Y = 546.99093 [pixels]
 
 	Coefficients de distorsion : k1 = 0.26293	k2 = -1.29893	p1 = 0.00134	p2 = -0.00016	k3 = 2.12898
@@ -42,60 +42,60 @@ Matrice intrinseque :
 ********************Caracteristiques specifiques pour chaque image : --> matrice extrinseque 
 
 Image 1:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = -0.383		phi  = 0.089		psi  = 0.023
+	Vecteurs de translation [pixels] : Tx = -3.407			Ty = -3.684			Tz = 20.268
 
 Image 2:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = -0.014		phi  = 0.034		psi  = 0.017
+	Vecteurs de translation [pixels] : Tx = -3.649			Ty = -3.513			Tz = 20.983
 
 Image 3:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = 0.375		phi  = 0.066		psi  = -0.014
+	Vecteurs de translation [pixels] : Tx = -3.259			Ty = -3.158			Tz = 18.864
 
 Image 4:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = 0.102		phi  = -0.396		psi  = 0.002
+	Vecteurs de translation [pixels] : Tx = -1.44			Ty = -3.859			Tz = 21.235
 
 Image 5:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = 0.082		phi  = -0.499		psi  = -0.03
+	Vecteurs de translation [pixels] : Tx = -0.953			Ty = -3.416			Tz = 16.094
 
 Image 6:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = 0.501		phi  = -0.028		psi  = 0.022
+	Vecteurs de translation [pixels] : Tx = -3.927			Ty = -2.79			Tz = 17.499
 
 Image 7:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = 0.127		phi  = 0.288		psi  = -0.007
+	Vecteurs de translation [pixels] : Tx = -6.742			Ty = -3.854			Tz = 19.78
 
 Image 8:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = -0.4		phi  = 0.048		psi  = 0.041
+	Vecteurs de translation [pixels] : Tx = -3.316			Ty = -3.229			Tz = 20.688
 
 Image 9:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = 0.698		phi  = 0.023		psi  = 0.008
+	Vecteurs de translation [pixels] : Tx = -3.886			Ty = -1.986			Tz = 14.633
 
 Image 10:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = 0.429		phi  = -0.365		psi  = -0.008
+	Vecteurs de translation [pixels] : Tx = -1.555			Ty = -2.748			Tz = 14.821
 
 Image 11:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = 0.284		phi  = 0.229		psi  = 0.034
+	Vecteurs de translation [pixels] : Tx = -4.817			Ty = -4.076			Tz = 18.513
 
 Image 12:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = 0.167		phi  = 0.215		psi  = -0.061
+	Vecteurs de translation [pixels] : Tx = -2.854			Ty = -2.846			Tz = 20.502
 
 Image 13:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = 0.786		phi  = 0.001		psi  = -0.075
+	Vecteurs de translation [pixels] : Tx = -2.882			Ty = -1.666			Tz = 14.791
 
 Image 14:
-	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
-	Vecteurs de translation [pixels] : Tx = -3.515			Ty = -3.355			Tz = 23.35
+	Vecteurs de rotation [pixels] : 	  theta  = 0.045		phi  = 0.037		psi  = -0.022
+	Vecteurs de translation [pixels] : Tx = -1.962			Ty = -3.658			Tz = 35.718
 
 Image 15:
 	Vecteurs de rotation [pixels] : 	  theta  = -0.339		phi  = 0.482		psi  = -0.05
