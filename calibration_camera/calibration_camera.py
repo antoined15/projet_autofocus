@@ -79,9 +79,9 @@ else:
     k3 = round(distorsion_coefficients[0][4], 5)
 
     print("\n\n********** Caractéristiques de la caméra**********\n")
-    print("\nMatrice caractéristique : |fx = ", fx, "|0\t\t", "     |cx = ",cx,
-                                    "|\n\t\t\t  |0\t\t    |fy = ", fy, "|cy = ", cy,
-                                    "|\n\t\t\t  |0\t\t    |0\t\t", "     |1\t\t|\n")
+    print("\nMatrice intrinseque :   |fx = ", fx, "|0\t\t", "     |cx = ",cx,
+                                    "|\n\t\t\t|0\t\t  |fy = ", fy, "  |cy = ", cy,
+                                    "|\n\t\t\t|0\t\t  |0\t\t", "     |1\t\t|\n")
 
 
     print("Coefficients de distorsion : k1 =", k1, "\tk2 =", k2, "\tp1 =", p1, "\tp2 =", p2, "\tk3 =", k3)
@@ -122,7 +122,7 @@ text = text + "Images utilisees pour la calibration : \n"
 for i in range(len(image_path)):
     text = text + "\t" + image_path[i] + "\n"
 
-text = text + "\nMatrice caracteristique : \tfx = " + str(fx) + "\tfy = " + str(fy) + "\tcx = " + str(cx) + "\tcy = " + str(cy) + "\n"
+text = text + "\nMatrice intrinseque : \tfx = " + str(fx) + "\tfy = " + str(fy) + "\tcx = " + str(cx) + "\tcy = " + str(cy) + "\n"
 text = text + "Coefficients de distorsion : k1 = " + str(k1) + "\tk2 = " + str(k2) + "\tp1 = " + str(p1) + "\tp2 = " + str(p2) + "\tk3 = " + str(k3) + "\n\n"
 
 text = text + "Caracteristiques specifiques pour chaque image : \n"
