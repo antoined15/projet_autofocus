@@ -28,6 +28,7 @@ else :
 
 #####Variables globales##############################################################################################################
 mat_dim_mire = np.zeros((15,15)) #Dimensions de la matrice
+matrice_symb_moyenne =  np.zeros(np.shape(mat_dim_mire))
 
 nbr_row_matrice = mat_dim_mire.shape[1] 
 nbr_col_matrice = mat_dim_mire.shape[0]
@@ -85,10 +86,8 @@ def moyennage_matrice_symbole(matrice): #fonction qui permet de faire un moyenna
     
     global num_pos_matrice_RGB_moy
     global matrice_circulaire_mire_symbole
-
     nbr_row_matrice = np.size(matrice, 0)
     nbr_col_matrice = np.size(matrice, 1)
-
     if num_pos_matrice_RGB_moy < len(matrice_circulaire_mire_symbole)-1:
         num_pos_matrice_RGB_moy = num_pos_matrice_RGB_moy + 1
     else:
@@ -102,6 +101,7 @@ def moyennage_matrice_symbole(matrice): #fonction qui permet de faire un moyenna
             for k in range(len(matrice_circulaire_mire_symbole)):
                 moy_pixel.append(matrice_circulaire_mire_symbole[k][i, j])
             moy_pixel_sans_0 = list(filter(lambda x: x != 0, moy_pixel)) #on enlève les 0 de la liste
+            #print("moy_pixel_sans_0 = ", moy_pixel_sans_0)
             if len(moy_pixel_sans_0) == 0: #si la liste est vide, on met 0 dans la matrice moyennee
                 matrice_moyennee[i, j] = 0
             else:
@@ -130,7 +130,7 @@ while True:
 
     nbr_circle_detected = 0 #variable d'incrémetation
     long = 0 #longueur du symbole, sera utilisé pour la normalisation de la mire
-    matrice_symb = mat_dim_mire #on crée une matrice de 15x15 --> taille de la mire qui contiendra les symboles détectés
+    matrice_symb = np.zeros(np.shape(mat_dim_mire)) #on crée une matrice de 15x15 --> taille de la mire qui contiendra les symboles détectés
     matrice_symbole_x = [] #contient les coordonnées x des symboles de la mire trouvés
     matrice_symbole_y = [] #contient les coordonnées y des symboles de la mire trouvés
     matrice_symbole_type = [] #contient le type de symbole (1 = trait, 2 = cercle) trouvés
@@ -214,16 +214,16 @@ while True:
                         
             #dessiner le rectangle minimum qui englobe les points de contour
             rect = cv2.minAreaRect(good_points) 
-            box = np.int0(cv2.boxPoints(rect)) #obtenir les 4 coins du rectangle
+            box = np.int32(cv2.boxPoints(rect)) #obtenir les 4 coins du rectangle
 
             #print("hull --> ", hull)
 
-            #utilisation de l'algo pour détecter les 4 cotés du rectangle
-            flat_hull = []
-            for i in range(len(hull)):
-                x = hull[i][0][0]
-                y = hull[i][0][1]
-                flat_hull.append([x, y])
+            #utilisation de l'algo pour détecter les 4 cotés du rectangle --> pas très efficace
+            #flat_hull = []
+            #for i in range(len(hull)):
+                #x = hull[i][0][0]
+                #y = hull[i][0][1]
+                #flat_hull.append([x, y])
             #print("flat_hull --> ", flat_hull)
             #polig_4C.algo_4cotes(flat_hull, img_show = False)
             #polyg4c_approx = polig_4C.approxpoly(polig_4C.polyg)
@@ -254,41 +254,52 @@ while True:
         good_points_et_type_et_rayon = None
         matrice_symb_moyenne = None
 
+
     if good_points_et_type_et_rayon is not None: #si il y a des symboles 
+        matrice_sequence_détectée =  [[[0 for i in range(3)] for j in range(15)] for k in range(15)] #mise en forme des données pour les séquences
         if len(good_points_et_type_et_rayon) >=15: #si il y a suffisament de symboles
+
             if box is not None: #si la mire est détectée
 
                 rotated_points = fct.matrice_rotation(angle, mean_x, mean_y, good_points) #rotation de la matrice contenant les coordonnées des symboles
                 normalised_points = fct.matrice_normalisation(rotated_points, nbr_col_matrice, nbr_col_matrice ) #normalisation de la matrice contenant les coordonnées des symboles
-
             i=0
             #calcul du rayon moyen des cercles détectés. Si le cercle est plus petit que la moyenne, alors on a un cercle et non un rond
-            #qqmean_rayon = np.mean(good_points_et_type_et_rayon[:, 3])
             mean_rayon= np.mean(list(filter(lambda x: x != 0, good_points_et_type_et_rayon[:, 3]))) #on enlève les 0 de la liste
             for x, y in normalised_points: #on met les symboles dans la nouvelle matrice normalisée et rotationnée
-                if matrice_symb[int(np.around(x))][int(np.around(y))] == 2 and good_points_et_type_et_rayon[i, 3] == 2 : #Si on a 2 symboles rond, alors c'est un cercle
-                    matrice_symb[int(np.around(x))][int(np.around(y))] = 3 #on met un cercle
+                x_mat = int(np.around(x))
+                y_mat = int(np.around(y))
+                #si on a un trait
 
-                elif good_points_et_type_et_rayon[i, 3] == 0 : #On a un trait
-                    matrice_symb[int(np.around(x))][int(np.around(y))] = 1 #on met un trait
-                else: #Soit un trait soit un rond
-                    if matrice_symb[int(np.around(x))][int(np.around(y))] ==3 : #Si déjà un cercle détecté, on passe car on veut pas le remplacer par un rond
-                        pass
-                    elif matrice_symb[int(np.around(x))][int(np.around(y))] == 0 : #Si pas de symbole,
-                        if good_points_et_type_et_rayon[i, 3] < mean_rayon*0.98 : #Si le rayon du symbole est plus petit que la moyenne, alors on a un cercle
-                            matrice_symb[int(np.around(x))][int(np.around(y))] = 3 #on met un cercle
-                        else: #Sinon on a un rond
-                            matrice_symb[int(np.around(x))][int(np.around(y))] = 2 #on met un rond
-                i+=1 
-        matrice_symb_moyenne = moyennage_matrice_symbole(matrice_symb) #retourne la matrice symbole moyennée sur 5 images --> permet de mieux connaitre la matrice symbole
-    
+                if matrice_symb[x_mat][y_mat] == 0 : #Si la case est vide
+                    matrice_symb[x_mat][y_mat] = good_points_et_type_et_rayon[i, 2] #on met le symbole
+                    matrice_sequence_détectée[x_mat][y_mat][0] = matrice_symb_moyenne[x_mat][y_mat]
+                    matrice_sequence_détectée[x_mat][y_mat][1] = good_points_et_type_et_rayon[i, 0]
+                    matrice_sequence_détectée[x_mat][y_mat][2] = good_points_et_type_et_rayon[i, 1]
+                    
+                elif matrice_symb[x_mat][y_mat] == 2 : #si la case est déjà un rond
+                    matrice_symb[x_mat][y_mat] = 3 #on met un cercle
+                    matrice_sequence_détectée[x_mat][y_mat][0] = matrice_symb_moyenne[x_mat][y_mat]
+                    matrice_sequence_détectée[x_mat][y_mat][1] = good_points_et_type_et_rayon[i, 0]
+                    matrice_sequence_détectée[x_mat][y_mat][2] = good_points_et_type_et_rayon[i, 1]
+                i = i+1
+    matrice_symb_moyenne = moyennage_matrice_symbole(matrice_symb) #retourne la matrice symbole moyennée sur 5 images --> permet de mieux connaitre la matrice symbole
+    #print("matrice_symb_moyenne --> ", matrice_symb_moyenne)
     
     if np.count_nonzero(matrice_symb_moyenne)>10 : #si il y a au moins 5 symboles
-        rotation_probable = fct.comparison_mire(Mire_reel, matrice_symb_moyenne)
-        #print("rotation probable de la mire: ", rotation_probable)
-        #fct.perspective_mire(frame, box) #optionnel, affiche la perspective de la mire
+        #rotation_probable = fct.comparison_mire(Mire_reel, matrice_symb_moyenne)
 
-    
+
+
+        #DETECTION DES APPARIEMENTS ENTRE LES SYMBOLES#####################################################################################################3
+
+
+        appariements, rotation_probable = fct.appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel)
+
+        for point in appariements:
+            print("position réelle", point[0], "\tposition détectée", point[1], "\tséquence", point[2], "\t symbole correspondant", Mire_reel[point[0][0]][point[0][1]], "\t nbr erreur", point[3])
+
+
     if  np.count_nonzero(matrice_symb_moyenne)>15 or mode ==2: #si il y a au moins 5 symboles ou si on est en mode 2 --> freeze de la position de la mire
         cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + int(angle)), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA) 
         cv2.circle(frame, (mean_x, mean_y), 10, (255, 255, 0), 2)

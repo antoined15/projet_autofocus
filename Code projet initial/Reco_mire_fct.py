@@ -176,3 +176,213 @@ def detect_contours(img, contour_show = False):
     return contours
 
 
+
+###################################################fonctions pour les séquences de symboles#######################################################
+def determination_sequences_mire_reel(mire):
+    posit_secu = []
+    for i in range(1, np.size(mire,0) -1):
+        for j in range(1, np.size(mire,1) -1):
+                #print("position", i, j)
+                A = mire[i][j]
+                B = mire[i-1][j]
+                C = mire[i][j+1]
+                D = mire[i+1][j]
+                E = mire[i][j-1]
+                F = mire[i-1][j-1]
+                G = mire[i-1][j+1]
+                H = mire[i+1][j+1]
+                I = mire[i+1][j-1]
+                sequ = [A, B, C, D, E, F, G, H, I]
+                posit_secu_uniq = [i, j], sequ
+                posit_secu.append(posit_secu_uniq)
+
+    return posit_secu
+
+def determination_sequences_mire_detect(mire):
+
+    posit_secu = []
+    for i in range(1, np.size(mire,0) -1):
+        for j in range(1, np.size(mire,1) -1):
+                #print(mire[[i][0]][[j][0]][0])
+                A = int(mire[[i][0]][[j][0]][0])
+                B = int(mire[[i-1][0]][[j][0]][0])
+                C = int(mire[[i][0]][[j+1][0]][0])
+                D = int(mire[[i+1][0]][[j][0]][0])
+                E = int(mire[[i][0]][[j-1][0]][0])
+                F = int(mire[[i-1][0]][[j-1][0]][0])
+                G = int(mire[[i-1][0]][[j+1][0]][0])
+                H = int(mire[[i+1][0]][[j+1][0]][0])
+                I = int(mire[[i+1][0]][[j-1][0]][0])
+                sequ = [A, B, C, D, E, F, G, H, I]
+                posit_secu_uniq = [int(mire[i][j][1]), int(mire[i][j][2])], sequ  #mettre les bonnes coordonnées
+                #print("position secu uniq", posit_secu_uniq)
+                posit_secu.append(posit_secu_uniq)
+
+    return posit_secu
+
+
+def comparaison_sequences(posit_sequence_reel, posit_sequence_detectee, erreur_max):
+
+    corresp_reel_detecte = []
+    for pt_reel in posit_sequence_reel:
+        for pt_dect in posit_sequence_detectee:
+            erreur = 0
+            for i in range(len(pt_reel[1])):
+                 if pt_reel[1][i] != pt_dect[1][i]:
+                     erreur += 1
+            if erreur <= erreur_max:
+                
+                corresp_reel_detecte.append([pt_reel[0], pt_dect[0], pt_reel[1], erreur])
+    
+    return corresp_reel_detecte
+
+
+def tri_correspondances(sequences_corresp):
+    corresp_reel_detect_trie = sorted(sequences_corresp, key=lambda x: (x[0], x[3]))   #on trie par position puis par erreur
+    #on enlève les doublons car on peut avoir plusieurs correspondances pour un point de la mire réelle
+
+    resultat_final = []
+    if len(corresp_reel_detect_trie) >1:
+        resultat_final.append(corresp_reel_detect_trie[0])
+        for i in range(1, len(corresp_reel_detect_trie)):
+
+            if corresp_reel_detect_trie[i][0] != corresp_reel_detect_trie[i-1][0]:
+                #print("corresp_reel_detect_trie[i][0]", corresp_reel_detect_trie[i][0])
+                resultat_final.append(corresp_reel_detect_trie[i])
+        
+    return resultat_final
+
+
+
+def appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel):
+
+    posit_sequence_detectee = determination_sequences_mire_detect(matrice_sequence_détectée)
+
+    matrice_reel_rot_90 = np.rot90(Mire_reel, k=1)
+    matrice_reel_rot_180 = np.rot90(Mire_reel, k=2)
+    matrice_reel_rot_270 = np.rot90(Mire_reel, k=3)
+
+
+    posit_sequence_reel_rot_0 = determination_sequences_mire_reel(Mire_reel)
+    posit_sequence_reel_rot_90 = determination_sequences_mire_reel(matrice_reel_rot_90)
+    posit_sequence_reel_rot_180 = determination_sequences_mire_reel(matrice_reel_rot_180)  
+    posit_sequence_reel_rot_270 = determination_sequences_mire_reel(matrice_reel_rot_270)     
+
+    #On cherche tous les appariements qui ont moins de 'erreurs_max'erreurs
+    corresp_reel_detect_rot_0 = comparaison_sequences(posit_sequence_reel_rot_0, posit_sequence_detectee, erreur_max=1) 
+    corresp_reel_detect_rot_90 = comparaison_sequences(posit_sequence_reel_rot_90, posit_sequence_detectee, erreur_max=1) 
+    corresp_reel_detect_rot_180 = comparaison_sequences(posit_sequence_reel_rot_180, posit_sequence_detectee, erreur_max=1) 
+    corresp_reel_detect_rot_270 = comparaison_sequences(posit_sequence_reel_rot_270, posit_sequence_detectee, erreur_max=1)     
+    #tri des données car certaines positions ont plusieurs appariements possibles --> on prend celui qui a le moins d'erreurs
+    corresp_reel_detect_trie_rot_0 = tri_correspondances(corresp_reel_detect_rot_0) 
+    corresp_reel_detect_trie_rot_90 = tri_correspondances(corresp_reel_detect_rot_90) 
+    corresp_reel_detect_trie_rot_180 = tri_correspondances(corresp_reel_detect_rot_180) 
+    corresp_reel_detect_trie_rot_270 = tri_correspondances(corresp_reel_detect_rot_270) 
+
+
+    #calculs de nombre d'appariements trouvés et de moyenne d'erreur
+    nbr_appariements_rot_0 = len(corresp_reel_detect_trie_rot_0)
+    nbr_appariements_rot_90 = len(corresp_reel_detect_trie_rot_90)
+    nbr_appariements_rot_180 = len(corresp_reel_detect_trie_rot_180)
+    nbr_appariements_rot_270 = len(corresp_reel_detect_trie_rot_270)
+
+
+    moy_erreur_appariements_rot_0 = 0
+    moy_erreur_appariements_rot_90 = 0
+    moy_erreur_appariements_rot_180 = 0
+    moy_erreur_appariements_rot_270 = 0
+
+    if nbr_appariements_rot_0 > 0 :
+        compteur_erreur = 0
+        for appariements in corresp_reel_detect_trie_rot_0:
+            compteur_erreur = compteur_erreur + appariements[3]
+        moy_erreur_appariements_rot_0 = compteur_erreur/nbr_appariements_rot_0  
+    else : 
+          moy_erreur_appariements_rot_0 = 1
+    if nbr_appariements_rot_90 > 0 :
+        compteur_erreur = 0
+        for appariements in corresp_reel_detect_trie_rot_90:
+            compteur_erreur = compteur_erreur + appariements[3]
+        moy_erreur_appariements_rot_90 = compteur_erreur/nbr_appariements_rot_90 
+    else : 
+          moy_erreur_appariements_rot_90 = 1
+
+    if nbr_appariements_rot_180 > 0 :
+        compteur_erreur = 0
+        for appariements in corresp_reel_detect_trie_rot_180:
+            compteur_erreur = compteur_erreur + appariements[3]
+        moy_erreur_appariements_rot_180 = compteur_erreur/nbr_appariements_rot_180 
+    else : 
+          moy_erreur_appariements_rot_180 = 1
+
+    if nbr_appariements_rot_270 > 0 :
+        compteur_erreur = 0
+        for appariements in corresp_reel_detect_trie_rot_270:
+            compteur_erreur = compteur_erreur + appariements[3]
+        moy_erreur_appariements_rot_270 = compteur_erreur/nbr_appariements_rot_270
+    else : 
+          moy_erreur_appariements_rot_270 = 1
+
+
+
+    #recheche de l'angle optimal pour avoir le plus d'appariements possibles : 
+    """
+    nbr_appariements_max = max(nbr_appariements_rot_0, nbr_appariements_rot_90, nbr_appariements_rot_180, nbr_appariements_rot_270)
+
+    candidats = []
+    if nbr_appariements_rot_0 == nbr_appariements_max: candidats.append([0,moy_erreur_appariements_rot_0])
+    if nbr_appariements_rot_90 == nbr_appariements_max: candidats.append([90,moy_erreur_appariements_rot_90])
+    if nbr_appariements_rot_180 == nbr_appariements_max: candidats.append([180,moy_erreur_appariements_rot_180])
+    if nbr_appariements_rot_270 == nbr_appariements_max: candidats.append([270,moy_erreur_appariements_rot_270])
+
+    erreur_moy_min = 100
+    for cand in candidats:
+        erreur_moy_cand = cand[1]
+        if erreur_moy_min > erreur_moy_cand:
+            erreur_moy_min = erreur_moy_cand
+
+    for cand in candidats:
+        if cand[1] == erreur_moy_min:
+            meilleur_angle = cand[0]
+    """
+    """
+    moy_appariement_min = min(moy_erreur_appariements_rot_0, moy_erreur_appariements_rot_90, moy_erreur_appariements_rot_180, moy_erreur_appariements_rot_270)
+    candidats = []
+    if moy_erreur_appariements_rot_0 == moy_appariement_min: candidats.append([0,nbr_appariements_rot_0])
+    if moy_erreur_appariements_rot_90 == moy_appariement_min: candidats.append([90,nbr_appariements_rot_90])
+    if moy_erreur_appariements_rot_180 == moy_appariement_min: candidats.append([180,nbr_appariements_rot_180])
+    if moy_erreur_appariements_rot_270 == moy_appariement_min: candidats.append([270,nbr_appariements_rot_270])
+
+    nbr_max_appariements = 0
+    for cand in candidats:
+        nbr_max_appariements_cand = cand[1]
+        if nbr_max_appariements < nbr_max_appariements_cand:
+            nbr_max_appariements = nbr_max_appariements_cand
+
+    for cand in candidats:
+        if cand[1] == nbr_max_appariements:
+            meilleur_angle = cand[0]
+
+
+"""
+    score_0 = nbr_appariements_rot_0 / moy_erreur_appariements_rot_0
+    score_90 = nbr_appariements_rot_90 / moy_erreur_appariements_rot_90
+    score_180 = nbr_appariements_rot_180 / moy_erreur_appariements_rot_180
+    score_270 = nbr_appariements_rot_270 / moy_erreur_appariements_rot_270
+    score_max = max(score_0, score_90, score_180, score_270)
+
+
+    if score_max == score_0:
+        meilleur_appariement = corresp_reel_detect_trie_rot_0
+        meilleur_angle = 0
+    elif score_max == score_90:
+        meilleur_appariement = corresp_reel_detect_trie_rot_90
+        meilleur_angle = 90
+    elif score_max == score_180:
+        meilleur_appariement = corresp_reel_detect_trie_rot_180
+        meilleur_angle = 180
+    elif score_max == score_270:
+        meilleur_appariement = corresp_reel_detect_trie_rot_270
+        meilleur_angle = 270
+        
+    return meilleur_appariement, meilleur_angle

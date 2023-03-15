@@ -46,6 +46,7 @@ def creation_mire_symb_coord_fictive(mire_detectee):
 
 
 def determination_sequences_mire_reel(mire):
+    print("mire", mire)
     posit_secu = []
     for i in range(1, np.size(mire,0) -1):
         for j in range(1, np.size(mire,1) -1):
@@ -79,14 +80,14 @@ def determination_sequences_mire_detect(mire):
                 H = int(mire[[i+1][0]][[j+1][0]][0])
                 I = int(mire[[i+1][0]][[j-1][0]][0])
                 sequ = [A, B, C, D, E, F, G, H, I]
-                posit_secu_uniq = [mire[i][j][1], mire[i][j][2]], sequ  #mettre les bonnes coordonnées
+                posit_secu_uniq = [int(mire[i][j][1]), int(mire[i][j][2])], sequ  #mettre les bonnes coordonnées
                 #print("position secu uniq", posit_secu_uniq)
                 posit_secu.append(posit_secu_uniq)
 
     return posit_secu
 
 
-def comparaison_sequences(posit_sequence_reel, posit_sequence_detectee):
+def comparaison_sequences(posit_sequence_reel, posit_sequence_detectee, erreur_max):
 
     corresp_reel_detecte = []
     for pt_reel in posit_sequence_reel:
@@ -95,22 +96,55 @@ def comparaison_sequences(posit_sequence_reel, posit_sequence_detectee):
             for i in range(len(pt_reel[1])):
                  if pt_reel[1][i] != pt_dect[1][i]:
                      erreur += 1
-            if erreur <= 2:
+            if erreur <= erreur_max:
                 
-                corresp_reel_detecte.append([pt_reel[0], pt_dect[0], pt_reel[1]])
+                corresp_reel_detecte.append([pt_reel[0], pt_dect[0], pt_reel[1], erreur])
     
     return corresp_reel_detecte
 
 
-mire_essai_posit = creation_mire_symb_coord_fictive(Mire_detectée)
-print(mire_essai_posit)
+def tri_correspondances(sequences_corresp):
 
+    corresp_reel_detect_trie = sorted(sequences_corresp, key=lambda x: (x[0], x[3]))   #on trie par position puis par erreur
+    #on enlève les doublons car on peut avoir plusieurs correspondances pour un point de la mire réelle
+
+    resultat_final = []
+    resultat_final.append(corresp_reel_detect_trie[0])
+    sub_list = []
+    for i in range(1, len(corresp_reel_detect_trie)):
+
+        if corresp_reel_detect_trie[i][0] != corresp_reel_detect_trie[i-1][0]:
+            resultat_final.append(corresp_reel_detect_trie[i])
+        
+    return resultat_final
+
+
+mire_essai_posit = creation_mire_symb_coord_fictive(Mire_detectée)
+
+
+#On détermine les séquences de chaque point de la mire réelle et des symboles détectés
 posit_sequence_reel = determination_sequences_mire_reel(Mire_reel)
 posit_sequence_detectee = determination_sequences_mire_detect(mire_essai_posit)
-print("posit_sequence_detectee", posit_sequence_detectee)
-print("posit_sequence_reel", posit_sequence_reel)
 
-corresp_reeel_detect = comparaison_sequences(posit_sequence_reel, posit_sequence_detectee)
+print(mire_essai_posit)
 
-for point in corresp_reeel_detect:
-    print("position réelle", point[0], "\tposition détectée", point[1], "\tséquence", point[2])
+#On compare les séquences de chaque point de la mire réelle et des symboles détectés
+corresp_reeel_detect = comparaison_sequences(posit_sequence_reel, posit_sequence_detectee, erreur_max=3)
+
+#for point in corresp_reeel_detect:
+    #print("position réelle", point[0], "\tposition détectée", point[1], "\tséquence", point[2], "\t symbole correspondant", Mire_reel[point[0][0]][point[0][1]], "\t erreur", point[3])
+
+#Certains points de la mire réelle peuvent correspondre à plusieurs points de la mire détectée, il faut donc choisir celui avec le moins d'erreurs
+corresp_reeel_detect_trie = tri_correspondances(corresp_reeel_detect)
+
+#for point in corresp_reeel_detect_trie:
+    #print("position réelle", point[0], "\tposition détectée", point[1], "\tséquence", point[2], "\t symbole correspondant", Mire_reel[point[0][0]][point[0][1]], "\t nbr erreur", point[3])
+
+#print(corresp_reeel_detect_trie)
+
+
+
+
+
+matrice_reel_rot_90 = np.rot90(Mire_reel, k=1)
+
