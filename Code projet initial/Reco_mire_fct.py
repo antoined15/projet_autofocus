@@ -152,6 +152,7 @@ def comparison_mire(real_mire, matrice_symb): #fonction globale pour comparer la
     #print("=270° : ",pourcent_symb_valide_270)
 
     max_symb_valid = min(pourcent_symb_valide_0, pourcent_symb_valide_90, pourcent_symb_valide_180, pourcent_symb_valide_270)
+   
     if max_symb_valid == pourcent_symb_valide_0:
         rot_probable = 0
     elif max_symb_valid == pourcent_symb_valide_90:
@@ -160,18 +161,17 @@ def comparison_mire(real_mire, matrice_symb): #fonction globale pour comparer la
         rot_probable = 180
     else:
         rot_probable = 270
-    #print("Rotation de la mire probable :", rot_probable, "°")
-    #print("----------------")
+        
     return rot_probable
 
-def detect_contours(frame, contour_show = False):
-
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) #convertir en noir et blanc
-    canny_image = cv2.Canny(gray, 50,150) #Appliquer un filtre de Canny pour détecter les contours
-    contours, _ = cv2.findContours(canny_image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) #trouver les contours de l'image avec le filtre de Canny
-    canny_image_cont = cv2.cvtColor(canny_image, cv2.COLOR_GRAY2RGB) #convertir en couleur pour pouvoir afficher les contours en couleur --> frame avec contours
+def detect_contours(img, contour_show = False):
+    #détection des contours de l'image
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) #conversion de l'image en niveau de gris
+    canny_image = cv2.Canny(gray, 50,150) #Appliquer un filtre de Canny sur l'image
+    contours, _ = cv2.findContours(canny_image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) #Détection des contours 
+    
     if (contour_show):
-        cv2.imshow('Contours', canny_image_cont) #on affiche l'image avec les contours   
+        cv2.imshow('Contours', cv2.cvtColor(canny_image, cv2.COLOR_GRAY2RGB)) #on affiche les contours détectés 
 
     return contours
 

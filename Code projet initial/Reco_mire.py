@@ -12,6 +12,7 @@
 import numpy as np
 import cv2
 import Reco_mire_fct as fct
+import polig_4_cotes_intersect as polig_4C
 
 cap = cv2.VideoCapture(0)
 
@@ -130,7 +131,7 @@ while True:
     angle = 0 #angle de rotation de la mire
     #LIGNE CODE DEBUT************************************************************************************************************************************************************************************
 
-    ret, frame = cap.read() #prendre une imageqq
+    ret, frame = cap.read() #prend une image
 
     #creation des images de travail
     frame_orig  = frame.copy() #copier l'image pour pouvoir la réutiliser pour la mire avec le masque
@@ -197,9 +198,22 @@ while True:
             #dessiner le rectangle minimum qui englobe les points de contour
             rect = cv2.minAreaRect(good_points) 
             box = np.int0(cv2.boxPoints(rect)) #obtenir les 4 coins du rectangle
-   
-            
-        #TRI DES SYMBOLES & POSITION DE LA MIRE **************************************************************************************************************************************************************
+
+            #print("hull --> ", hull)
+
+            #utilisation de l'algo pour détecter les 4 cotés du rectangle
+            flat_hull = []
+            for i in range(len(hull)):
+                x = hull[i][0][0]
+                y = hull[i][0][1]
+                flat_hull.append([x, y])
+            #print("flat_hull --> ", flat_hull)
+            #polig_4C.algo_4cotes(flat_hull, img_show = False)
+            #polyg4c_approx = polig_4C.approxpoly(polig_4C.polyg)
+            #print("longueur polyg4c_approx", len(polyg4c_approx), "\t polyg4c_approx --> ", polyg4c_approx)
+            #cv2.polylines(frame, [np.array(polyg4c_approx)], True, (100,255,255), 2) # dessiner le polygone convexe correspondant à la mire
+
+        #TRI DES SYMBOLES & POSITION DE LA MIRE *************************************************************************************************************************************************************
             moments = cv2.moments(box)
 
             if rect is not None and moments["m00"] != 0 :
@@ -241,11 +255,9 @@ while True:
                 elif good_points_et_type_et_rayon[i, 3] == 0 : #On a un trait
                     matrice_symb[int(np.around(x))][int(np.around(y))] = 1 #on met un trait
                 else: #Soit un trait soit un rond
-                    
                     if matrice_symb[int(np.around(x))][int(np.around(y))] ==3 : #Si déjà un cercle détecté, on passe car on veut pas le remplacer par un rond
                         pass
                     elif matrice_symb[int(np.around(x))][int(np.around(y))] == 0 : #Si pas de symbole,
-
                         if good_points_et_type_et_rayon[i, 3] < mean_rayon*0.98 : #Si le rayon du symbole est plus petit que la moyenne, alors on a un cercle
                             matrice_symb[int(np.around(x))][int(np.around(y))] = 3 #on met un cercle
                         else: #Sinon on a un rond
@@ -256,6 +268,7 @@ while True:
     
     if np.count_nonzero(matrice_symb_moyenne)>10 : #si il y a au moins 5 symboles
         rotation_probable = fct.comparison_mire(Mire_reel, matrice_symb_moyenne)
+        #print("rotation probable de la mire: ", rotation_probable)
         #fct.perspective_mire(frame, box) #optionnel, affiche la perspective de la mire
 
     
