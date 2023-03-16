@@ -3,6 +3,7 @@
 import cv2
 import numpy as np
 import math
+import threading
 
 
 def variance_of_image_blur_laplacian(gray_image): 
@@ -92,8 +93,8 @@ def matrice_rgb_show(matrice): #transforme la matrice numérique en matrice coul
     
     nbr_row_matrice = np.size(matrice, 0)
     nbr_col_matrice = np.size(matrice, 1)
+    matrice_rgb = np.zeros((nbr_col_matrice, nbr_row_matrice, 3), dtype=np.uint8)
 
-    matrice_rgb = np.zeros((nbr_row_matrice, nbr_col_matrice, 3), dtype=np.uint8)
     colors = [(0, 0, 0), (0, 0, 255), (255,0 , 0), (0, 255, 0), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
     for i in range(nbr_row_matrice):
         for j in range(nbr_col_matrice):
@@ -187,9 +188,6 @@ def suppr_symboles_detectes_non_pertinents (points, points_et_type_et_rayon, tre
 
 
 
-
-
-
 ###################################################fonctions pour les séquences de symboles#######################################################
 def determination_sequences_mire_reel(mire):
     posit_secu = []
@@ -272,7 +270,37 @@ global posit_sequence_reel_rot_90
 global posit_sequence_reel_rot_180
 global posit_sequence_reel_rot_270
 global need_to_determine_real_sequences 
+
+global corresp_reel_detect_trie_rot_0
+global corresp_reel_detect_trie_rot_90
+global corresp_reel_detect_trie_rot_180
+global corresp_reel_detect_trie_rot_270
+
 need_to_determine_real_sequences = True
+
+
+def sequence_comparison_et_tri(posit_sequence_reel, posit_sequence_detectee, nbr_erreur_max, rot):
+
+    global corresp_reel_detect_trie_rot_0
+    global corresp_reel_detect_trie_rot_90
+    global corresp_reel_detect_trie_rot_180
+    global corresp_reel_detect_trie_rot_270
+
+    corresp_reel_detect = comparaison_sequences(posit_sequence_reel, posit_sequence_detectee, nbr_erreur_max)
+    corresp_reel_detect_trie = tri_correspondances(corresp_reel_detect)
+    #écrire le nom du thread : 
+    #print("thread name = ", threading.current_thread().name)
+    #print("Nombre de threads actifs = ", threading.active_count())
+    #print("rot = ", rot)
+    if rot ==0 : 
+        corresp_reel_detect_trie_rot_0  = corresp_reel_detect_trie
+    elif rot ==90 :
+        corresp_reel_detect_trie_rot_90  = corresp_reel_detect_trie
+    elif rot ==180 :
+        corresp_reel_detect_trie_rot_180  = corresp_reel_detect_trie
+    elif rot ==270 :
+        corresp_reel_detect_trie_rot_270  = corresp_reel_detect_trie
+
 
 
 def appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_erreur_max_seq):
@@ -282,6 +310,11 @@ def appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_
     global posit_sequence_reel_rot_180
     global posit_sequence_reel_rot_270
     global need_to_determine_real_sequences
+
+    global corresp_reel_detect_trie_rot_0
+    global corresp_reel_detect_trie_rot_90
+    global corresp_reel_detect_trie_rot_180
+    global corresp_reel_detect_trie_rot_270
 
     if(need_to_determine_real_sequences): #On ne cherche les séquences de la mire réelle qu'une seule fois car ils seront toujours identiques quelque soit la rotation de la mire
         need_to_determine_real_sequences = False
@@ -296,25 +329,54 @@ def appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_
 
     posit_sequence_detectee = determination_sequences_mire_detect(matrice_sequence_détectée)
 
-    #On cherche tous les appariements qui ont moins de 'erreurs_max'erreurs
-    corresp_reel_detect_rot_0 = comparaison_sequences(posit_sequence_reel_rot_0, posit_sequence_detectee, nbr_erreur_max_seq) 
-    corresp_reel_detect_rot_90 = comparaison_sequences(posit_sequence_reel_rot_90, posit_sequence_detectee, nbr_erreur_max_seq) 
-    corresp_reel_detect_rot_180 = comparaison_sequences(posit_sequence_reel_rot_180, posit_sequence_detectee,nbr_erreur_max_seq) 
-    corresp_reel_detect_rot_270 = comparaison_sequences(posit_sequence_reel_rot_270, posit_sequence_detectee, nbr_erreur_max_seq)     
-    #tri des données car certaines positions ont plusieurs appariements possibles --> on prend celui qui a le moins d'erreurs
-    corresp_reel_detect_trie_rot_0 = tri_correspondances(corresp_reel_detect_rot_0) 
-    corresp_reel_detect_trie_rot_90 = tri_correspondances(corresp_reel_detect_rot_90) 
-    corresp_reel_detect_trie_rot_180 = tri_correspondances(corresp_reel_detect_rot_180) 
-    corresp_reel_detect_trie_rot_270 = tri_correspondances(corresp_reel_detect_rot_270) 
+
+    # on compare les séquences de la mire réelle avec les séquences de la mire détectée, et en même temps on enlève les doublons
+    
+    #cette partie se fait avec des threads, sinon c'est trop long
 
 
-    #calculs de nombre d'appariements trouvés et de moyenne d'erreur
-    nbr_appariements_rot_0 = len(corresp_reel_detect_trie_rot_0)
-    nbr_appariements_rot_90 = len(corresp_reel_detect_trie_rot_90)
-    nbr_appariements_rot_180 = len(corresp_reel_detect_trie_rot_180)
-    nbr_appariements_rot_270 = len(corresp_reel_detect_trie_rot_270)
+
+    """
+    #partie séquentielle : 
+    sequence_comparison_et_tri(posit_sequence_reel_rot_0, posit_sequence_detectee, nbr_erreur_max_seq, 0)
+    sequence_comparison_et_tri(posit_sequence_reel_rot_90, posit_sequence_detectee, nbr_erreur_max_seq, 90)
+    sequence_comparison_et_tri(posit_sequence_reel_rot_180, posit_sequence_detectee, nbr_erreur_max_seq, 180)
+    sequence_comparison_et_tri(posit_sequence_reel_rot_270, posit_sequence_detectee, nbr_erreur_max_seq, 270)
+    
+    """
+
+    #partie multithread :
+    thread_rot_0 = threading.Thread(target=sequence_comparison_et_tri, args=(posit_sequence_reel_rot_0, posit_sequence_detectee, nbr_erreur_max_seq, 0))
+    thread_rot_90 = threading.Thread(target=sequence_comparison_et_tri, args=(posit_sequence_reel_rot_90, posit_sequence_detectee, nbr_erreur_max_seq, 90))
+    thread_rot_180 = threading.Thread(target=sequence_comparison_et_tri, args=(posit_sequence_reel_rot_180, posit_sequence_detectee, nbr_erreur_max_seq, 180))
+    thread_rot_270 = threading.Thread(target=sequence_comparison_et_tri, args=(posit_sequence_reel_rot_270, posit_sequence_detectee, nbr_erreur_max_seq, 270))
+    
+    thread_rot_0.start()
+    thread_rot_90.start()
+    thread_rot_180.start()
+    thread_rot_270.start()
+
+    thread_rot_0.join()
+    thread_rot_90.join()
+    thread_rot_180.join()
+    thread_rot_270.join()
+ 
+  
+    try : nbr_appariements_rot_0 = len(corresp_reel_detect_trie_rot_0)
+    except  : nbr_appariements_rot_0 = 0
+    try : nbr_appariements_rot_90 = len(corresp_reel_detect_trie_rot_90)
+    except  : nbr_appariements_rot_90 = 0
+    try : nbr_appariements_rot_180 = len(corresp_reel_detect_trie_rot_180)
+    except  : nbr_appariements_rot_180 = 0
+    try : nbr_appariements_rot_270 = len(corresp_reel_detect_trie_rot_270)
+    except : nbr_appariements_rot_270 = 0
 
 
+    #print("nbr_appariements_rot_0 : ", nbr_appariements_rot_0)
+    #print("nbr_appariements_rot_90 : ", nbr_appariements_rot_90)
+    #print("nbr_appariements_rot_180 : ", nbr_appariements_rot_180)
+    #print("nbr_appariements_rot_270 : ", nbr_appariements_rot_270)
+    #print("############################################")
     moy_erreur_appariements_rot_0 = 0
     moy_erreur_appariements_rot_90 = 0
     moy_erreur_appariements_rot_180 = 0
@@ -378,5 +440,10 @@ def appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_
         meilleur_appariement = corresp_reel_detect_trie_rot_270
         meilleur_angle = 270
         erreur_moy_appariement = moy_erreur_appariements_rot_270
+
+    if meilleur_appariement is None or meilleur_angle is None or erreur_moy_appariement is None:
+        meilleur_appariement = []
+        meilleur_angle = 0
+        erreur_moy_appariement = 0
         
     return meilleur_appariement, meilleur_angle, erreur_moy_appariement 

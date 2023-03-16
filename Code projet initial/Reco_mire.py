@@ -13,6 +13,7 @@ import numpy as np
 import cv2
 import Reco_mire_fct as fct
 import polig_4_cotes_intersect as polig_4C
+import threading
 
 appareil_utilise = "webcam" #webcam ou camera
 
@@ -269,15 +270,16 @@ while True:
     #DETECTION DES APPARIEMENTS ENTRE LES SYMBOLES#####################################################################################################
 
     matrice_symb_moyenne = moyennage_matrice_symbole(matrice_symb) #retourne la matrice symbole moyennée sur 5 images --> permet de mieux connaitre la matrice symbole
-    if np.count_nonzero(matrice_symb_moyenne)>10 : #si il y a au moins 10 symboles, on détecte l'angle de rotation de la mire et on cherche les appariements
+
+    if matrice_sequence_détectée is not None: #si il y a au moins 10 symboles, on détecte l'angle de rotation de la mire et on cherche les appariements
         #rotation_probable = fct.comparison_mire(Mire_reel, matrice_symb_moyenne) #pas utilisé car les apariements marchent mieux
         nbr_erreur_seq_max = 1
-        appariements, rotation_probable, erreur_moy_appariement = fct.appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_erreur_seq_max )
+        appariements, rotation_probable, erreur_moy_appariement = fct.appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_erreur_seq_max)
         nbr_appariements = len(appariements)
-        #print("Nombre d'appariements trouvés : ", nbr_appariements)
+        #print("rotation probable", rotation_probable, "\t erreur moyenne appariement", erreur_moy_appariement, "\t nombre d'appariements", nbr_appariements)
+
         
-        #for point in appariements:
-            #print("position réelle", point[0], "\tposition détectée", point[1], "\tséquence", point[2], "\t symbole correspondant", Mire_reel[point[0][0]][point[0][1]], "\t nbr erreur", point[3])
+
         
     #MASQUE AVEC QUE LA MIRE ET CALCUL DE FLOU*******************************************************************************************************************************************************************************
     mode_name = ""
@@ -349,6 +351,9 @@ while True:
 
 
     #LIGNE CODE FIN************************************************************************************************************************************************************************************ 
+
+
+
 
     fct.matrice_rgb_show(matrice_symb_moyenne) # transforme la matrice symbole en image RGB et l'affiche
     cv2.imshow('frame', frame) #on affiche l'image de base
