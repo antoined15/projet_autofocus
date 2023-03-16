@@ -112,16 +112,20 @@ for pos_T in Position_tourelle:
 		sobel = []
 		laplacian = []
 		canny = []
-		moyenne_fm = []
+		picture_entropy = []
+		corner_counter = []
+		picture_variability = []
 		posit_M = []
 
 		for pos_M in range(Vmin_moteur_autofocus, Vmax_moteur_autofocus + pas_focus, pas_focus): #Calcul de la valeur de flou uniquement sur l'image de la mire
 			
-			fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_moyenne_moy = fct.variance_of_image_blur_moyenne(cap,best_box, nbre_image_moy_mesure, color_frame, taille_text_frame, pos_T, pos_M)
+			fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_entropy_moy, fm_corner_counter_moy, fm_picture_variability_moy = fct.variance_of_image_blur_moyenne(cap,best_box, nbre_image_moy_mesure, color_frame, taille_text_frame, pos_T, pos_M)
 			sobel.append(fm_sobel_moy)
 			laplacian.append(fm_laplacian_moy)
 			canny.append(fm_canny_moy)
-			moyenne_fm.append(fm_moyenne_moy)
+			picture_entropy.append(fm_entropy_moy)
+			corner_counter.append(fm_corner_counter_moy)
+			picture_variability.append(fm_picture_variability_moy)
 			posit_M.append(pos_M)
 
 	
@@ -131,11 +135,14 @@ for pos_T in Position_tourelle:
 		plt.plot(posit_M, sobel,'+-',  label = 'sobel', )
 		plt.plot(posit_M, laplacian,'+-', label = 'laplacian')
 		plt.plot(posit_M, canny,'+-', label = 'canny')
-		plt.plot(posit_M, moyenne_fm,'+-', label = 'moyenne')
+		plt.plot(posit_M, picture_entropy,'+-', label = 'entropie image')
+		plt.plot(posit_M, corner_counter,'+-', label = 'coins détectés')
+		plt.plot(posit_M, picture_variability,'+-', label = 'variabilité image')
 		plt.legend()
 		plt.grid()
 		plt.xlabel('Position du moteur autofocus')
 		plt.ylabel('Valeur de flou')
+		plt.yscale('log')
 		plt.title(titre)
 		mplcursors.cursor( hover=True)#, annotations=True, annotation_kwargs=dict(fontsize=10, color='red'))
 		plt.show(block = False)

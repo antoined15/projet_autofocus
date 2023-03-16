@@ -218,17 +218,36 @@ def img_masque_mire(frame, box_mire):
 
 
 
-def variance_of_image_blur_laplacian(image): #MARCHE
-	# compute the Laplacian of the image and then return the focus
-	return round(cv2.Laplacian(image, cv2.CV_64F).var(), 2)
+def variance_of_image_blur_laplacian(gray_image): 
+        #Calcule la valeur de flou de l'image avec le Laplacien
+	return round(cv2.Laplacian(gray_image, cv2.CV_64F).var(), 2)
 
-def variance_of_image_blur_sobel(image):#MARCHE
-	# compute the Sobel of the image and then return the focus
-	return round(cv2.Sobel(image,cv2.CV_64F,1,0,ksize=3 ).var(), 1)
+def variance_of_image_blur_sobel(gray_image): 
+    #Calcule la valeur de flou de l'image avec le Sobel --> méthode de la dérivée seconde
+    sobelx = cv2.Sobel(gray_image, cv2.CV_64F, 1, 0, ksize=5) #calcul du gradient de Sobel selon l'axe x
+    sobely = cv2.Sobel(gray_image, cv2.CV_64F, 0, 1, ksize=5) #calcul du gradient de Sobel selon l'axe y
+    return cv2.norm(sobelx, sobely, cv2.NORM_L2) #calcul de la norme des deux gradients
 
-def variance_of_image_blur_Canny(image):#MARCHE
-	# compute the Canny of the image and then return the focus
-	return round(cv2.Canny(image, 100, 200).var(), 1)
+def variance_of_image_blur_Canny(gray_image):
+    #Calcule la valeur de flou de l'image avec l'algorithme de Canny
+	return round(cv2.Canny(gray_image, 100, 200).var(), 1)
+
+def variance_of_image_blur_entropy(gray_image):
+    #Calcule la valeur de flou de l'image par méthode statistique avec l'entropie : dispersion des pixels de l'image
+    hist = np.histogram(gray_image, bins=256, range=(0, 255))[0]
+    hist = hist / hist.sum()
+    return -np.sum(hist * np.log2(hist + 1e-7))
+
+def variance_of_image_blur_corner_counter(gray_image): 
+    #Calcule la valeur de flou de l'image avec le nombre de coins détectés
+    fast = cv2.FastFeatureDetector_create()
+    kp = fast.detect(gray_image, None)
+    return len(kp)
+
+def variance_of_image_blur_picture_variability(gray_image): 
+    #Calcule la valeur de flou de l'image avec la variabilité de l'image
+    mean , stddev = cv2.meanStdDev(gray_image)
+    return mean[0][0]
 
 
 
@@ -241,11 +260,12 @@ def variance_of_image_blur(frame,best_box, color_frame, taille_text_frame, pos_T
 	fm_sobel = int(variance_of_image_blur_sobel(gray_mire))
 	fm_laplacian = int(variance_of_image_blur_laplacian(gray_mire))
 	fm_canny = int(variance_of_image_blur_Canny(gray_mire))
+	fm_entropy = int(variance_of_image_blur_entropy(gray_mire))
+	fm_corner_counter = int(variance_of_image_blur_corner_counter(gray_mire))
+	fm_picture_variability = int(variance_of_image_blur_picture_variability(gray_mire))
 
-	mean_focus_value = int((fm_sobel+fm_laplacian+fm_canny)/3)
 
-
-	return fm_sobel, fm_laplacian, fm_canny, mean_focus_value
+	return fm_sobel, fm_laplacian, fm_canny, fm_entropy, fm_corner_counter, fm_picture_variability
 
 
 def variance_of_image_blur_moyenne(cap,best_box, nbr_mesures, color_frame, taille_text_frame, pos_T, pos_M):
@@ -253,16 +273,20 @@ def variance_of_image_blur_moyenne(cap,best_box, nbr_mesures, color_frame, taill
 	focus_sobel_tab = []
 	focus_laplacian_tab = []
 	focus_canny_tab = []
-	focus_moyenne_tab = []
+	focus_entropy_tab = []
+	focus_corner_counter_tab = []
+	focus_picture_variability_tab = []
 	fm_sobel_moy = 0
 	fm_laplacian_moy = 0
 	fm_canny_moy = 0
-	fm_moyenne_moy = 0
+	fm_entropy_moy = 0
+	fm_corner_counter_moy = 0
+	fm_picture_variability_moy = 0
 
 	for i in range(nbr_mesures):
 		ret, frame = cap.read() #prendre une image
 
-		fm_sobel, fm_laplacian, fm_canny, mean_focus_value = variance_of_image_blur(frame, best_box,color_frame, taille_text_frame, pos_T, pos_M)
+		fm_sobel, fm_laplacian, fm_canny, fm_entropy, fm_corner_counter, fm_picture_variability = variance_of_image_blur(frame, best_box,color_frame, taille_text_frame, pos_T, pos_M)
 
 		cv2.putText(frame, "{}{}{}{}".format(" Position de la tourelle :  ",pos_T[0],";", pos_T[1]), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)  
 		cv2.putText(frame, "{}".format(" Position de la mire trouvee, calcul du flou"), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA) 
@@ -271,21 +295,27 @@ def variance_of_image_blur_moyenne(cap,best_box, nbr_mesures, color_frame, taill
 		cv2.putText(frame, "{}{}".format(" Valeur de flou de la mire avec Sobel : ", fm_sobel), (0, 100), cv2.FONT_HERSHEY_SIMPLEX,taille_text_frame, color_frame, 1, cv2.LINE_AA)
 		cv2.putText(frame, "{}{}".format(" Valeur de flou de la mire avec Laplace : ", fm_laplacian), (0, 120), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
 		cv2.putText(frame, "{}{}".format(" Valeur de flou de la mire avec Canny : ", fm_canny), (0, 140), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
-		cv2.putText(frame, "{}{}".format(" Moyenne des valeurs de flou : ", mean_focus_value ), (0, 160), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
+		cv2.putText(frame, "{}{}".format(" Entropie de l'image : ", fm_entropy), (0, 160), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
+		cv2.putText(frame, "{}{}".format(" Nombre de coins détectés: ", fm_corner_counter), (0, 180), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
+		cv2.putText(frame, "{}{}".format(" Variabilité de l'image : ", fm_picture_variability), (0, 200), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)
+
 
 		cv2.imshow('frame', frame) #on affiche l'image de base
 
 		focus_sobel_tab.append(fm_sobel)
 		focus_laplacian_tab.append(fm_laplacian)
 		focus_canny_tab.append(fm_canny)
-		focus_moyenne_tab.append(mean_focus_value)
+		focus_entropy_tab.append(fm_entropy)
+		focus_corner_counter_tab.append(fm_corner_counter)
+		focus_picture_variability_tab.append(fm_picture_variability)
 		if cv2.waitKey(1) == ord('q'):
 			break #si q est appuyé, on quitte la boucle
 
 	fm_sobel_moy = int(np.mean(focus_sobel_tab))
 	fm_laplacian_moy = int(np.mean(focus_laplacian_tab))
 	fm_canny_moy = int(np.mean(focus_canny_tab))
-	fm_moyenne_moy = int(np.mean(focus_moyenne_tab))
-
-
-	return fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_moyenne_moy
+	fm_entropy_moy = int(np.mean(focus_entropy_tab))
+	fm_corner_counter_moy = int(np.mean(focus_corner_counter_tab))
+	fm_picture_variability_moy = int(np.mean(focus_picture_variability_tab))
+	
+	return fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_entropy_moy, fm_corner_counter_moy, fm_picture_variability_moy
