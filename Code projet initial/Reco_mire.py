@@ -272,9 +272,10 @@ while True:
     if np.count_nonzero(matrice_symb_moyenne)>10 : #si il y a au moins 10 symboles, on détecte l'angle de rotation de la mire et on cherche les appariements
         #rotation_probable = fct.comparison_mire(Mire_reel, matrice_symb_moyenne) #pas utilisé car les apariements marchent mieux
         nbr_erreur_seq_max = 1
-        appariements, rotation_probable = fct.appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_erreur_seq_max )
-
-        print("Nombre d'appariements trouvés", len(appariements))
+        appariements, rotation_probable, erreur_moy_appariement = fct.appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_erreur_seq_max )
+        nbr_appariements = len(appariements)
+        #print("Nombre d'appariements trouvés : ", nbr_appariements)
+        
         #for point in appariements:
             #print("position réelle", point[0], "\tposition détectée", point[1], "\tséquence", point[2], "\t symbole correspondant", Mire_reel[point[0][0]][point[0][1]], "\t nbr erreur", point[3])
         
@@ -297,17 +298,18 @@ while True:
         mode_name = " Freeze des contours"
 
     #AFFICHAGE SUR L'IMAGE "FRAME" ************************************************************************************************************************************************************************************
-    try: 
-        good_points_et_type_et_rayon
-    except NameError:
-        good_points_et_type_et_rayon = None
+    try: good_points_et_type_et_rayon
+    except NameError: good_points_et_type_et_rayon = None
+   
 
     if  good_points_et_type_et_rayon is not None and len(good_points_et_type_et_rayon) >=10 : #si il y a au moins 10 symboles détectés
-        cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + int(angle)), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA) 
+        cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + int(angle)), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA) 
         cv2.circle(frame, (mean_x, mean_y), 10, (255, 255, 0), 2)
-        cv2.putText(frame, "{}{}{}{}".format(" Position du centre de gravite de la mire : X=", mean_x," ; Y=", mean_y), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
-        cv2.putText(frame, "{}{}".format(" Vecteur de rotation du rectangle englobant : angle = ", int(angle)), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)         
+        cv2.putText(frame, "{}{}{}{}".format(" Position du centre de gravite de la mire : X=", mean_x," ; Y=", mean_y), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
+        cv2.putText(frame, "{}{}".format(" Vecteur de rotation du rectangle englobant : angle = ", int(angle)), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)         
         cv2.arrowedLine(frame, (mean_x, mean_y), (end_x, end_y), (255, 255, 0), 1)
+        cv2.putText(frame, "{}{}".format(" Nombre d'appariements trouves : ", nbr_appariements), (0, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
+        cv2.putText(frame, "{}{}".format(" Erreur moyenne par d'appariement [symboles/squence] : ", round(erreur_moy_appariement, 2)), (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)       
 
         angle_total = rotation_probable + angle #angle du rectangle englobant
         arrow_length = 150

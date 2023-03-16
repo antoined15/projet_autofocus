@@ -365,14 +365,18 @@ def appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_
     if score_max == score_0:
         meilleur_appariement = corresp_reel_detect_trie_rot_0
         meilleur_angle = 0
+        erreur_moy_appariement = moy_erreur_appariements_rot_0
     elif score_max == score_90:
         meilleur_appariement = corresp_reel_detect_trie_rot_90
         meilleur_angle = 90
+        erreur_moy_appariement = moy_erreur_appariements_rot_90
     elif score_max == score_180:
         meilleur_appariement = corresp_reel_detect_trie_rot_180
         meilleur_angle = 180
+        erreur_moy_appariement = moy_erreur_appariements_rot_180
     elif score_max == score_270:
         meilleur_appariement = corresp_reel_detect_trie_rot_270
         meilleur_angle = 270
+        erreur_moy_appariement = moy_erreur_appariements_rot_270
         
-    return meilleur_appariement, meilleur_angle
+    return meilleur_appariement, meilleur_angle, erreur_moy_appariement 
