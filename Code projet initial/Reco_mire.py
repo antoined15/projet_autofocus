@@ -161,7 +161,7 @@ while True:
     
     #DETECTION DES CERCLES ************************************************************************************************************************************************************************************
     for cnt in contours:    
-        if cv2.contourArea(cnt) > 5: # Vérifier si le contour est suffisamment grand pour être considéré comme une forme
+        if cv2.contourArea(cnt) > 4: # Vérifier si le contour est suffisamment grand pour être considéré comme une forme
 
             rect = cv2.minAreaRect(cnt) # Obtenir le rectangle minimum qui englobe les points de contour
             (x, y), (w, h), angle = rect
@@ -201,20 +201,16 @@ while True:
     
     points_et_type_et_rayon = np.array(np.column_stack((matrice_symbole_x, matrice_symbole_y, matrice_symbole_type, matrice_symbole_rayon)), dtype = np.int32)
     points = np.array(np.column_stack((matrice_symbole_x, matrice_symbole_y, )), dtype = np.int32)
-
-    treshold = long_trait_max * 23 #distance pour que les points soient considérés comme des vraies symboles : cercle de rayon de 20 fois la longueur moyenne des traits centré sur le centre de gravité de la mire
-
+  
     if points.size != 0: #si il y a des symboles détectés
-        mean = np.mean(points, axis=0) #calcul de la moyenne des coordonnées des symboles
-        distance = np.linalg.norm(points - mean, axis=1) #calcul de la distance entre chaque point et la moyenne
-        good_points_et_type_et_rayon = points_et_type_et_rayon[distance < treshold] #on garde les points qui sont à moins de la distance treshold de la moyenne
-        good_points = points[distance < treshold] 
-        if len(good_points_et_type_et_rayon) >=10: #si il y a au moins 10 symboles proches, on considère qu'on a trouvé la mire
-            hull = cv2.convexHull(np.array(good_points))
-                        
-            #dessiner le rectangle minimum qui englobe les points de contour
-            rect = cv2.minAreaRect(good_points) 
-            box = np.int32(cv2.boxPoints(rect)) #obtenir les 4 coins du rectangle
+
+        treshold = long_trait_max * 23 # distance jusqu'à laquelle les points sont considérés comme valide : si il sont à max 23*longueur_trait_max, on considère qu'ils font partie de la mire
+        good_points, good_points_et_type_et_rayon = fct.suppr_symboles_detectes_non_pertinents(points, points_et_type_et_rayon, treshold)
+
+        if len(good_points_et_type_et_rayon) >=10: # Si au moins 10 symboles sont détectés, on considère que la mire est détectée
+            hull = cv2.convexHull(np.array(good_points)) #dessiner le contour convexe qui englobe les points de contour 
+            rect = cv2.minAreaRect(good_points) #dessiner le rectangle minimum qui englobe les points de contour
+            box = np.int32(cv2.boxPoints(rect)) #obtenir les 4 coins du rectangle englobant
 
             #print("hull --> ", hull)
 
@@ -230,46 +226,30 @@ while True:
             #print("longueur polyg4c_approx", len(polyg4c_approx), "\t polyg4c_approx --> ", polyg4c_approx)
             #cv2.polylines(frame, [np.array(polyg4c_approx)], True, (100,255,255), 2) # dessiner le polygone convexe correspondant à la mire
 
-        #TRI DES SYMBOLES & POSITION DE LA MIRE *************************************************************************************************************************************************************
+            #POSITION DE LA MIRE *************************************************************************************************************************************************************
             moments = cv2.moments(box)
-
-            if rect is not None and moments["m00"] != 0 :
-                #calcul des moments de l'image pour trouver son centre de gravité
-                mean_x = int(moments["m10"] / moments["m00"]) 
-                mean_y = int(moments["m01"] / moments["m00"])   
-
+            
+            #calcul des moments de l'image pour trouver son centre de gravité
+            mean_x = int(moments["m10"] / moments["m00"]) 
+            mean_y = int(moments["m01"] / moments["m00"])   
                 
-                angle = int(rect[-1]) #angle du rectangle englobant
-                if angle == 90:
-                    angle = 0
-                arrow_length = 100
-                end_x = int(mean_x + arrow_length * np.cos(np.deg2rad(angle)))
-                end_y = int(mean_y + arrow_length * np.sin(np.deg2rad(angle)))   
+            angle = int(rect[-1]) #angle du rectangle englobant
+            if angle == 90: angle = 0
+            arrow_length = 100
+            end_x = int(mean_x + arrow_length * np.cos(np.deg2rad(angle)))
+            end_y = int(mean_y + arrow_length * np.sin(np.deg2rad(angle)))   
             cv2.circle(frame_symb_only, (mean_x, mean_y), int(treshold), (0,100, 0), 2) #dessiner un cercle sur l'image des symboles détectés 
-        #CREATION DE LA MATRICE SYMBOLE CORRESPONDANT A LA MIRE ET AUX BONS SYMBOLES*******************************************************************************************************************************
 
-    rotation_probable = 0
-    try: good_points_et_type_et_rayon
-    except NameError: 
-        good_points_et_type_et_rayon = None
-        matrice_symb_moyenne = None
+            #CREATION DE LA MATRICE SYMBOLE CORRESPONDANT A LA MIRE ET AUX BONS SYMBOLES*******************************************************************************************************************************
+ 
+            rotated_points = fct.matrice_rotation(angle, mean_x, mean_y, good_points) #rotation de la matrice contenant les coordonnées des symboles
+            normalised_points = fct.matrice_normalisation(rotated_points, nbr_col_matrice, nbr_col_matrice ) #normalisation de la matrice contenant les coordonnées des symboles
 
-
-    if good_points_et_type_et_rayon is not None: #si il y a des symboles 
-        matrice_sequence_détectée =  [[[0 for i in range(3)] for j in range(15)] for k in range(15)] #mise en forme des données pour les séquences
-        if len(good_points_et_type_et_rayon) >=15: #si il y a suffisament de symboles
-
-            if box is not None: #si la mire est détectée
-
-                rotated_points = fct.matrice_rotation(angle, mean_x, mean_y, good_points) #rotation de la matrice contenant les coordonnées des symboles
-                normalised_points = fct.matrice_normalisation(rotated_points, nbr_col_matrice, nbr_col_matrice ) #normalisation de la matrice contenant les coordonnées des symboles
             i=0
-            #calcul du rayon moyen des cercles détectés. Si le cercle est plus petit que la moyenne, alors on a un cercle et non un rond
-            mean_rayon= np.mean(list(filter(lambda x: x != 0, good_points_et_type_et_rayon[:, 3]))) #on enlève les 0 de la liste
+            matrice_sequence_détectée =  [[[0 for i in range(3)] for j in range(15)] for k in range(15)] #mise en forme des données pour les séquences
             for x, y in normalised_points: #on met les symboles dans la nouvelle matrice normalisée et rotationnée
                 x_mat = int(np.around(x))
                 y_mat = int(np.around(y))
-                #si on a un trait
 
                 if matrice_symb[x_mat][y_mat] == 0 : #Si la case est vide
                     matrice_symb[x_mat][y_mat] = good_points_et_type_et_rayon[i, 2] #on met le symbole
@@ -283,40 +263,22 @@ while True:
                     matrice_sequence_détectée[x_mat][y_mat][1] = good_points_et_type_et_rayon[i, 0]
                     matrice_sequence_détectée[x_mat][y_mat][2] = good_points_et_type_et_rayon[i, 1]
                 i = i+1
-    matrice_symb_moyenne = moyennage_matrice_symbole(matrice_symb) #retourne la matrice symbole moyennée sur 5 images --> permet de mieux connaitre la matrice symbole
-    #print("matrice_symb_moyenne --> ", matrice_symb_moyenne)
+
+
     
-    if np.count_nonzero(matrice_symb_moyenne)>10 : #si il y a au moins 5 symboles
-        #rotation_probable = fct.comparison_mire(Mire_reel, matrice_symb_moyenne)
+    #DETECTION DES APPARIEMENTS ENTRE LES SYMBOLES#####################################################################################################
 
+    matrice_symb_moyenne = moyennage_matrice_symbole(matrice_symb) #retourne la matrice symbole moyennée sur 5 images --> permet de mieux connaitre la matrice symbole
+    if np.count_nonzero(matrice_symb_moyenne)>10 : #si il y a au moins 10 symboles, on détecte l'angle de rotation de la mire et on cherche les appariements
+        #rotation_probable = fct.comparison_mire(Mire_reel, matrice_symb_moyenne) #pas utilisé car les apariements marchent mieux
+        nbr_erreur_seq_max = 1
+        appariements, rotation_probable = fct.appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_erreur_seq_max )
 
-
-        #DETECTION DES APPARIEMENTS ENTRE LES SYMBOLES#####################################################################################################3
-
-
-        appariements, rotation_probable = fct.appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel)
-
-        for point in appariements:
-            print("position réelle", point[0], "\tposition détectée", point[1], "\tséquence", point[2], "\t symbole correspondant", Mire_reel[point[0][0]][point[0][1]], "\t nbr erreur", point[3])
-
-
-    if  np.count_nonzero(matrice_symb_moyenne)>15 or mode ==2: #si il y a au moins 5 symboles ou si on est en mode 2 --> freeze de la position de la mire
-        cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + int(angle)), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA) 
-        cv2.circle(frame, (mean_x, mean_y), 10, (255, 255, 0), 2)
-        cv2.putText(frame, "{}{}{}{}".format(" Position du centre de gravite de la mire : X=", mean_x," ; Y=", mean_y), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
-        cv2.putText(frame, "{}{}".format(" Vecteur de rotation du rectangle englobant : angle = ", int(angle)), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)         
-        cv2.arrowedLine(frame, (mean_x, mean_y), (end_x, end_y), (255, 255, 0), 1)
-
-        angle_total = rotation_probable + angle #angle du rectangle englobant
-        arrow_length = 150
-        end_x_angle_tot = int(mean_x + arrow_length * np.cos(np.deg2rad(angle_total)))
-        end_y_angle_tot = int(mean_y + arrow_length * np.sin(np.deg2rad(angle_total)))  
-
-        cv2.arrowedLine(frame, (mean_x, mean_y), (end_x_angle_tot, end_y_angle_tot), (50, 90, 255), 1)
-        cv2.polylines(frame, [hull], True, (0,255,0), 2) # dessiner le polygone convexe correspondant à la mire
-        cv2.polylines(frame_symb_only, [hull], True, (0,255,0), 2) # dessiner le polygone convexe correspondant à la mire
-        cv2.drawContours(frame, [box], 0, (0,0,255), 2) 
-        #MASQUE AVEC QUE LA MIRE ET CALCUL DE FLOU*******************************************************************************************************************************************************************************
+        print("Nombre d'appariements trouvés", len(appariements))
+        #for point in appariements:
+            #print("position réelle", point[0], "\tposition détectée", point[1], "\tséquence", point[2], "\t symbole correspondant", Mire_reel[point[0][0]][point[0][1]], "\t nbr erreur", point[3])
+        
+    #MASQUE AVEC QUE LA MIRE ET CALCUL DE FLOU*******************************************************************************************************************************************************************************
     mode_name = ""
     if cv2.waitKey(1) == ord('r'): #on change de mode
         if mode ==0 : 
@@ -334,7 +296,32 @@ while True:
     else:
         mode_name = " Freeze des contours"
 
-    if np.count_nonzero(matrice_symb_moyenne)>15 or mode == 0 : #si il y a au moins 15 symboles
+    #AFFICHAGE SUR L'IMAGE "FRAME" ************************************************************************************************************************************************************************************
+    try: 
+        good_points_et_type_et_rayon
+    except NameError:
+        good_points_et_type_et_rayon = None
+
+    if  good_points_et_type_et_rayon is not None and len(good_points_et_type_et_rayon) >=10 : #si il y a au moins 10 symboles détectés
+        cv2.putText(frame, "{}{}".format(" Angle de rotation probable de la mire : angle = ", rotation_probable + int(angle)), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA) 
+        cv2.circle(frame, (mean_x, mean_y), 10, (255, 255, 0), 2)
+        cv2.putText(frame, "{}{}{}{}".format(" Position du centre de gravite de la mire : X=", mean_x," ; Y=", mean_y), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
+        cv2.putText(frame, "{}{}".format(" Vecteur de rotation du rectangle englobant : angle = ", int(angle)), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)         
+        cv2.arrowedLine(frame, (mean_x, mean_y), (end_x, end_y), (255, 255, 0), 1)
+
+        angle_total = rotation_probable + angle #angle du rectangle englobant
+        arrow_length = 150
+        end_x_angle_tot = int(mean_x + arrow_length * np.cos(np.deg2rad(angle_total)))
+        end_y_angle_tot = int(mean_y + arrow_length * np.sin(np.deg2rad(angle_total)))  
+
+        cv2.arrowedLine(frame, (mean_x, mean_y), (end_x_angle_tot, end_y_angle_tot), (50, 90, 255), 1)
+        cv2.polylines(frame, [hull], True, (0,255,0), 2) # dessiner le polygone convexe correspondant à la mire
+        cv2.polylines(frame_symb_only, [hull], True, (0,255,0), 2) # dessiner le polygone convexe correspondant à la mire
+        cv2.drawContours(frame, [box], 0, (0,0,255), 2) 
+
+
+    #AFFICHAGE SUR L'IMAGE "MIRE" ************************************************************************************************************************************************************************************
+    if  (good_points_et_type_et_rayon is not None and len(good_points_et_type_et_rayon) >=10) or mode == 0 : #si il y a au moins 10 symboles détectésor mode == 0 : #si il y a au moins 15 symboles
         cv2.fillConvexPoly(mire, box_if_freeze,255) #on remplit la mire avec du blanc
         mire = cv2.bitwise_and(frame_orig, frame_orig, mask=mire) #on applique la mire sur l'image de départ
 
@@ -349,11 +336,9 @@ while True:
         cv2.putText(mire, "{}{}".format(" Sobel focus value : ", fm_sobel), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv2.LINE_AA)
         cv2.putText(mire, "{}{}".format(" Laplacian focus value : ", fm_laplacian), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
         cv2.putText(mire, "{}{}".format(" Canny focus value : ", fm_canny), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
-
         cv2.putText(mire, "{}{}".format(" Entropy focus value : ", fm_entropie), (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1, cv2.LINE_AA)
         cv2.putText(mire, "{}{}".format(" Number of corner detected: ", fm_corner_counter), (0, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 1, cv2.LINE_AA)
         cv2.putText(mire, "{}{}".format(" Picture variance : ", fm_picture_variance), (0, 140), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (122, 255, 122), 1, cv2.LINE_AA)
-
         cv2.putText(mire, "{}".format(mode_name), (0, 160), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
         if mode==0:
@@ -362,10 +347,8 @@ while True:
 
 
     #LIGNE CODE FIN************************************************************************************************************************************************************************************ 
- 
-    if matrice_symb_moyenne is not None: #si la matrice des symboles n'est pas vide
-        fct.matrice_rgb_show(matrice_symb_moyenne) # transforme la matrice symbole en image RGB et l'affiche
 
+    fct.matrice_rgb_show(matrice_symb_moyenne) # transforme la matrice symbole en image RGB et l'affiche
     cv2.imshow('frame', frame) #on affiche l'image de base
     cv2.imshow('frame_symb_only', frame_symb_only) #on affiche l'image avec les symboles
     cv2.imshow('mire', mire) #on affiche la mire
@@ -374,6 +357,7 @@ while True:
         break #si q est appuyé, on quitte la boucle
 
 cv2.destroyAllWindows()
+
 if appareil_utilise == "webcam":
     cap.release()
 elif appareil_utilise == "camera":
