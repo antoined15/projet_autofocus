@@ -225,7 +225,6 @@ def determination_sequences_mire_detect(mire):
     posit_secu = []
     for i in range(1, np.size(mire,0) -1):
         for j in range(1, np.size(mire,1) -1):
-                #print(mire[[i][0]][[j][0]][0])
                 A = int(mire[[i][0]][[j][0]][0])
                 B = int(mire[[i-1][0]][[j][0]][0])
                 C = int(mire[[i][0]][[j+1][0]][0])
@@ -237,8 +236,7 @@ def determination_sequences_mire_detect(mire):
                 I = int(mire[[i+1][0]][[j-1][0]][0])
                 sequ = [A, B, C, D, E, F, G, H, I]
                 posit_secu_uniq = [int(mire[i][j][1]), int(mire[i][j][2])], sequ  #mettre les bonnes coordonnées
-                #print("position secu uniq", posit_secu_uniq)
-                if A != 0: #on ne garde que les points qui sont des symboles
+                if A != 0: #on ne garde que les séquences qui ont pour centre un symbole
                     posit_secu.append(posit_secu_uniq)
 
     return posit_secu
