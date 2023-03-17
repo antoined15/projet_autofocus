@@ -271,11 +271,15 @@ while True:
 
     matrice_symb_moyenne = moyennage_matrice_symbole(matrice_symb) #retourne la matrice symbole moyennée sur 5 images --> permet de mieux connaitre la matrice symbole
 
+    try : matrice_sequence_détectée
+    except NameError: matrice_sequence_détectée = None
     if matrice_sequence_détectée is not None: #si il y a au moins 10 symboles, on détecte l'angle de rotation de la mire et on cherche les appariements
         #rotation_probable = fct.comparison_mire(Mire_reel, matrice_symb_moyenne) #pas utilisé car les apariements marchent mieux
         nbr_erreur_seq_max = 1
         appariements, rotation_probable, erreur_moy_appariement = fct.appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_erreur_seq_max)
         nbr_appariements = len(appariements)
+        #for point in appariements:
+            #print("position réelle", point[0], "\tposition détectée", point[1], "\tséquence", point[2], "\t symbole correspondant", Mire_reel[point[0][0]][point[0][1]], "\t nbr erreur", point[3])
         #print("rotation probable", rotation_probable, "\t erreur moyenne appariement", erreur_moy_appariement, "\t nombre d'appariements", nbr_appariements)
 
         
@@ -352,10 +356,11 @@ while True:
 
     #LIGNE CODE FIN************************************************************************************************************************************************************************************ 
 
+    try : appariements
+    except NameError : appariements = None
 
 
-
-    fct.matrice_rgb_show(matrice_symb_moyenne) # transforme la matrice symbole en image RGB et l'affiche
+    fct.matrice_rgb_show(matrice_symb_moyenne, appariements, affich_err_appariement = True ) # transforme la matrice symbole en image RGB et l'affiche
     cv2.imshow('frame', frame) #on affiche l'image de base
     cv2.imshow('frame_symb_only', frame_symb_only) #on affiche l'image avec les symboles
     cv2.imshow('mire', mire) #on affiche la mire

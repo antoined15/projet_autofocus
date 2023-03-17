@@ -89,24 +89,35 @@ def pourcent_symbole_detected(matrice):
     pourcent_symb_detect = round(100 * symbole_found/(nbr_row_matrice*nbr_col_matrice), 3)
     return pourcent_symb_detect
 
-def matrice_rgb_show(matrice): #transforme la matrice numérique en matrice couleur et l'affiche
+def matrice_rgb_show(matrice, appariements, affich_err_appariement): #transforme la matrice numérique en matrice couleur et l'affiche
     
     nbr_row_matrice = np.size(matrice, 0)
     nbr_col_matrice = np.size(matrice, 1)
-    matrice_rgb = np.zeros((nbr_col_matrice, nbr_row_matrice, 3), dtype=np.uint8)
+    matrice_rgb = np.zeros((450, 450, 3), dtype=np.uint8)
 
-    colors = [(0, 0, 0), (0, 0, 255), (255,0 , 0), (0, 255, 0), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
+    colors = [(0, 0, 0), (0, 0, 180), (180,0 , 0), (0, 180, 0), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
     for i in range(nbr_row_matrice):
         for j in range(nbr_col_matrice):
-            matrice_rgb[j, i] = colors[matrice[i, j]]
-            try : 
-                matrice_rgb[j, i] = colors[matrice[i, j]]
-            except:
-                matrice_rgb[i, j] = (0, 0, 0)
-    matrice_rgb = cv2.resize(matrice_rgb, (450, 450), cv2.INTER_NEAREST)
+
+            #on crée des rectangles de couleur pour les symboles détectés
+            if matrice[i, j] != 0:
+                cv2.rectangle(matrice_rgb, (i*30, j*30), (i*30+30, j*30+30), colors[matrice[i, j]], -1)
+
+    #on affiche les erreurs d'appariement
+    if affich_err_appariement == True and appariements is not None and len(appariements) != 0:
+        for appar in appariements : 
+            coord_x = int(appar[0][0]*30 + 7)
+            coord_y = int(appar[0][1]*30 + 20)
+            erreur = str(appar[3])
+            cv2.putText(matrice_rgb, erreur, (coord_x,coord_y ), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
+
     pourc_symb = pourcent_symbole_detected(matrice) #affiche le pourcentage de symboles détecté
     cv2.putText(matrice_rgb, "{}{}{}".format(" Symboles detectes : ", round(pourc_symb, 2), "%"), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
+       
     cv2.imshow('matrice des symboles detectes', matrice_rgb) #on affiche la matrice de symbole
+
+
+
 
 
 def symbole_identique_2_matrices_V3(matrice1, matrice2): #calcul de l'erreur quadratique moyenne entre deux matrices
@@ -227,7 +238,8 @@ def determination_sequences_mire_detect(mire):
                 sequ = [A, B, C, D, E, F, G, H, I]
                 posit_secu_uniq = [int(mire[i][j][1]), int(mire[i][j][2])], sequ  #mettre les bonnes coordonnées
                 #print("position secu uniq", posit_secu_uniq)
-                posit_secu.append(posit_secu_uniq)
+                if A != 0: #on ne garde que les points qui sont des symboles
+                    posit_secu.append(posit_secu_uniq)
 
     return posit_secu
 
@@ -334,8 +346,6 @@ def appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_
     
     #cette partie se fait avec des threads, sinon c'est trop long
 
-
-
     """
     #partie séquentielle : 
     sequence_comparison_et_tri(posit_sequence_reel_rot_0, posit_sequence_detectee, nbr_erreur_max_seq, 0)
@@ -417,10 +427,10 @@ def appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_
 
     #recheche de l'angle optimal pour avoir le plus d'appariements possibles : 
 
-    score_0 = nbr_appariements_rot_0 / (moy_erreur_appariements_rot_0 + 1) # on ajoute 1 pour éviter les divisions par 0
-    score_90 = nbr_appariements_rot_90 / (moy_erreur_appariements_rot_90 + 1)
-    score_180 = nbr_appariements_rot_180 / (moy_erreur_appariements_rot_180 + 1)
-    score_270 = nbr_appariements_rot_270 / (moy_erreur_appariements_rot_270 + 1)
+    score_0 = nbr_appariements_rot_0 #* 2 / (moy_erreur_appariements_rot_0 + 1) # on ajoute 1 pour éviter les divisions par 0
+    score_90 = nbr_appariements_rot_90 #* 2 / (moy_erreur_appariements_rot_90 + 1)
+    score_180 = nbr_appariements_rot_180 #* 2 / (moy_erreur_appariements_rot_180 + 1)
+    score_270 = nbr_appariements_rot_270 #* 2 / (moy_erreur_appariements_rot_270 + 1)
     score_max = max(score_0, score_90, score_180, score_270)
 
 
