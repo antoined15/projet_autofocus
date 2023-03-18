@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import math
 import threading
-
+import itertools
 
 def variance_of_image_blur_laplacian(gray_image): 
         #Calcule la valeur de flou de l'image avec le Laplacien
@@ -258,10 +258,11 @@ def comparaison_sequences(posit_sequence_reel, posit_sequence_detectee, erreur_m
     return corresp_reel_detecte
 
 
-def tri_correspondances(sequences_corresp):
+def tri_correspondances_OLD(sequences_corresp):
     corresp_reel_detect_trie = sorted(sequences_corresp, key=lambda x: (x[0], x[3]))   #on trie par position puis par erreur
     #on enlève les doublons car on peut avoir plusieurs correspondances pour un point de la mire réelle
-
+    for corr in corresp_reel_detect_trie:
+        print("corresp_reel_detect_NON_trie", corr)
     resultat_final = []
     if len(corresp_reel_detect_trie) >1:
         resultat_final.append(corresp_reel_detect_trie[0])
@@ -270,9 +271,40 @@ def tri_correspondances(sequences_corresp):
             if corresp_reel_detect_trie[i][0] != corresp_reel_detect_trie[i-1][0]:
                 #print("corresp_reel_detect_trie[i][0]", corresp_reel_detect_trie[i][0])
                 resultat_final.append(corresp_reel_detect_trie[i])
-        
+    for corr in resultat_final:
+        print("corresp_reel_detect_trie", corr)
     return resultat_final
 
+
+
+
+def tri_correspondances(sequences_corresp):
+
+
+    
+    corresp_reel_detect_trie = sorted(sequences_corresp, key=lambda x: (x[0], x[3]))   #on trie par position puis par erreur
+
+    corresp_triee = []
+    for cle, groupe in itertools.groupby(corresp_reel_detect_trie, lambda x: x[0]): #on crée un groupe par position de mire réelles
+        valeurs_groupe = [[x[1], x[2], x[3]] for x in groupe]
+        corresp_triee.append((cle, valeurs_groupe))
+
+
+    sequences_triees = []
+
+    for corr in corresp_triee:
+        #print("corresp_triee", corr)
+        nbre_appariements_possibles = len(corr[1]) #On regarde le nombre de points image qui pourraient correspondre à un seul point de la mire réelle")
+        if nbre_appariements_possibles == 1:
+            sequences_triees.append([corr[0], corr[1][0][0], corr[1][0][1], corr[1][0][2]])
+            #print("essai appariement", appariement)
+        elif corr[1][0][2] < corr[1][1][2]: #si plusieurs appariements sont possibles, on sait que la plus petite erreur possible se trouve en première possition
+            #si la première séquence a une erreur plus faible que la seconde, on prend la première, sinon on ne prend rien car on ne sait pas laquelle est la bonne
+            sequences_triees.append([corr[0], corr[1][0][0], corr[1][0][1], corr[1][0][2]])
+
+    #for corr in sequences_triees:
+        #print("corresp_reel_detect_trie", corr)
+    return corresp_reel_detect_trie
 
 
 global posit_sequence_reel_rot_0

@@ -275,7 +275,7 @@ while True:
     except NameError: matrice_sequence_détectée = None
     if matrice_sequence_détectée is not None: #si il y a au moins 10 symboles, on détecte l'angle de rotation de la mire et on cherche les appariements
         #rotation_probable = fct.comparison_mire(Mire_reel, matrice_symb_moyenne) #pas utilisé car les apariements marchent mieux
-        nbr_erreur_seq_max = 1
+        nbr_erreur_seq_max = 0
         appariements, rotation_probable, erreur_moy_appariement = fct.appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_erreur_seq_max)
         nbr_appariements = len(appariements)
         #for point in appariements:
