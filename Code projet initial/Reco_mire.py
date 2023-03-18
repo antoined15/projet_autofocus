@@ -12,8 +12,7 @@
 import numpy as np
 import cv2
 import Reco_mire_fct as fct
-import polig_4_cotes_intersect as polig_4C
-import threading
+
 
 appareil_utilise = "webcam" #webcam ou camera
 
@@ -40,23 +39,6 @@ nbr_moyennage_matrice_symbole = 30 #nombre de moyennage de la matrice des symbol
 
 for i in range(nbr_moyennage_matrice_symbole):
     matrice_circulaire_mire_symbole.append(mat_dim_mire) #on remplit la liste avec des matrices de 15*15
-
-Mire_reel_ancien = [[1,2,2,2,1,2,1,2,2,2,1,2,2,2,1],#correspond à la mire réelle (normalement)
-            [2,2,2,1,1,1,2,1,1,2,2,1,2,2,1], 
-            [2,1,2,2,1,2,2,2,2,2,2,2,2,2,1],
-            [1,2,1,2,2,2,1,2,2,2,2,2,1,2,2],
-            [1,1,2,1,2,1,2,2,2,1,1,2,1,2,2],
-            [2,1,2,2,2,1,2,1,2,1,2,2,2,1,2],
-            [2,2,1,1,2,2,2,1,2,2,1,2,1,1,2],
-            [1,2,2,2,1,2,1,1,1,2,2,1,2,1,1],
-            [2,1,2,2,1,2,2,2,2,2,2,1,2,2,1],
-            [2,2,2,1,1,1,2,1,2,2,2,2,1,2,2],
-            [1,2,2,2,2,1,1,2,2,2,2,1,2,2,1],
-            [2,2,2,1,2,1,2,1,2,2,1,1,1,2,1],
-            [2,2,1,2,1,2,2,2,2,2,1,1,2,2,2],
-            [2,1,2,1,1,2,1,1,2,1,2,2,1,2,2],
-            [2,2,2,2,1,2,1,2,1,1,2,1,2,2,2]]
-
 
 Mire_reel =  [[1, 3, 3, 2, 1, 3, 1, 2, 3, 3, 1, 3, 2, 2, 1], #si = 1, trait. Si = 2, ronds, si 3 = cercle
                 [3, 2, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 3, 3, 1], 
@@ -213,20 +195,6 @@ while True:
             rect = cv2.minAreaRect(good_points) #dessiner le rectangle minimum qui englobe les points de contour
             box = np.int32(cv2.boxPoints(rect)) #obtenir les 4 coins du rectangle englobant
 
-            #print("hull --> ", hull)
-
-            #utilisation de l'algo pour détecter les 4 cotés du rectangle --> pas très efficace
-            #flat_hull = []
-            #for i in range(len(hull)):
-                #x = hull[i][0][0]
-                #y = hull[i][0][1]
-                #flat_hull.append([x, y])
-            #print("flat_hull --> ", flat_hull)
-            #polig_4C.algo_4cotes(flat_hull, img_show = False)
-            #polyg4c_approx = polig_4C.approxpoly(polig_4C.polyg)
-            #print("longueur polyg4c_approx", len(polyg4c_approx), "\t polyg4c_approx --> ", polyg4c_approx)
-            #cv2.polylines(frame, [np.array(polyg4c_approx)], True, (100,255,255), 2) # dessiner le polygone convexe correspondant à la mire
-
             #POSITION DE LA MIRE *************************************************************************************************************************************************************
             moments = cv2.moments(box)
             
@@ -275,16 +243,13 @@ while True:
     except NameError: matrice_sequence_détectée = None
     if matrice_sequence_détectée is not None: #si il y a au moins 10 symboles, on détecte l'angle de rotation de la mire et on cherche les appariements
         #rotation_probable = fct.comparison_mire(Mire_reel, matrice_symb_moyenne) #pas utilisé car les apariements marchent mieux
-        nbr_erreur_seq_max = 0
+        nbr_erreur_seq_max = 1
         appariements, rotation_probable, erreur_moy_appariement = fct.appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_erreur_seq_max)
         nbr_appariements = len(appariements)
         #for point in appariements:
             #print("position réelle", point[0], "\tposition détectée", point[1], "\tséquence", point[2], "\t symbole correspondant", Mire_reel[point[0][0]][point[0][1]], "\t nbr erreur", point[3])
         #print("rotation probable", rotation_probable, "\t erreur moyenne appariement", erreur_moy_appariement, "\t nombre d'appariements", nbr_appariements)
-
-        
-
-        
+       
     #MASQUE AVEC QUE LA MIRE ET CALCUL DE FLOU*******************************************************************************************************************************************************************************
     mode_name = ""
     if cv2.waitKey(1) == ord('r'): #on change de mode
@@ -314,8 +279,7 @@ while True:
         cv2.putText(frame, "{}{}{}{}".format(" Position du centre de gravite de la mire : X=", mean_x," ; Y=", mean_y), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
         cv2.putText(frame, "{}{}".format(" Vecteur de rotation du rectangle englobant : angle = ", int(angle)), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)         
         cv2.arrowedLine(frame, (mean_x, mean_y), (end_x, end_y), (255, 255, 0), 1)
-        cv2.putText(frame, "{}{}".format(" Nombre d'appariements trouves : ", nbr_appariements), (0, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
-        cv2.putText(frame, "{}{}".format(" Erreur moyenne par d'appariement [symboles/squence] : ", round(erreur_moy_appariement, 2)), (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)       
+     
 
         angle_total = rotation_probable + angle #angle du rectangle englobant
         arrow_length = 150
@@ -335,7 +299,7 @@ while True:
 
         gray_mire = cv2.cvtColor(mire, cv2.COLOR_BGR2GRAY)
         fm_sobel = int(fct.variance_of_image_blur_sobel(gray_mire))
-        fm_laplacian = int(fct.variance_of_image_blur_laplacian(gray_mire))
+        fm_laplacian = int(fct.variance_of_image_blur_laplacian(gray_mire))   
         fm_canny = int(fct.variance_of_image_blur_Canny(gray_mire))
         fm_entropie = round(fct.variance_of_image_blur_entropy(gray_mire), 4)
         fm_corner_counter = fct.variance_of_image_blur_corner_counter(gray_mire)
@@ -357,10 +321,12 @@ while True:
     #LIGNE CODE FIN************************************************************************************************************************************************************************************ 
 
     try : appariements
-    except NameError : appariements = None
+    except NameError : 
+        appariements = None
+        erreur_moy_appariement = None
 
 
-    fct.matrice_rgb_show(matrice_symb_moyenne, appariements, affich_err_appariement = True ) # transforme la matrice symbole en image RGB et l'affiche
+    fct.matrice_rgb_show(matrice_symb_moyenne, appariements, frame_orig, erreur_moy_appariement, affich_appariement = True ) # transforme la matrice symbole en image RGB et l'affiche
     cv2.imshow('frame', frame) #on affiche l'image de base
     cv2.imshow('frame_symb_only', frame_symb_only) #on affiche l'image avec les symboles
     cv2.imshow('mire', mire) #on affiche la mire

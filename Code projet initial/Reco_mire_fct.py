@@ -38,16 +38,6 @@ def variance_of_image_blur_picture_variability(gray_image):
     return mean[0][0]
 
 
-def perspective_mire(image, box): 
-    #fonction pour transformer l'image de mire en perspective --> Sert à rien en tant que tel   
-    pts1 = np.float32([box[0], box[1], box[3], box[2]])
-    pts2 = np.float32([[0,0],[300,0],[0,300],[300,300]])        
-
-    matrix = cv2.getPerspectiveTransform(pts1, pts2)
-    perspective = cv2.warpPerspective(image, matrix, (300, 300))
-    cv2.imshow('perspective', perspective)
-
-
 def  matrice_normalisation(matrice_inputs, nbr_col_matrice, nbr_row_matrice ): 
     #Fonction qui permet de normaliser la matrice d'entrée pour placer les symboles dans une matrice de taille nbr_row_matrice*nbr_col_matrice 
 
@@ -89,7 +79,7 @@ def pourcent_symbole_detected(matrice):
     pourcent_symb_detect = round(100 * symbole_found/(nbr_row_matrice*nbr_col_matrice), 3)
     return pourcent_symb_detect
 
-def matrice_rgb_show(matrice, appariements, affich_err_appariement): #transforme la matrice numérique en matrice couleur et l'affiche
+def matrice_rgb_show(matrice, appariements, frame_orig, erreur_moy_appariement, affich_appariement): #transforme la matrice numérique en matrice couleur et l'affiche
     
     nbr_row_matrice = np.size(matrice, 0)
     nbr_col_matrice = np.size(matrice, 1)
@@ -104,77 +94,62 @@ def matrice_rgb_show(matrice, appariements, affich_err_appariement): #transforme
                 cv2.rectangle(matrice_rgb, (i*30, j*30), (i*30+30, j*30+30), colors[matrice[i, j]], -1)
 
     #on affiche les erreurs d'appariement
-    if affich_err_appariement == True and appariements is not None and len(appariements) != 0:
+    if affich_appariement == True and appariements is not None and len(appariements) != 0:
         for appar in appariements : 
             coord_x = int(appar[0][0]*30 + 7)
             coord_y = int(appar[0][1]*30 + 20)
             erreur = str(appar[3])
             cv2.putText(matrice_rgb, erreur, (coord_x,coord_y ), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
 
+    if affich_appariement == True and appariements is not None : 
+        cv2.putText(frame_orig, "{}{}".format(" Nombre d'appariements trouves : ", len(appariements)), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
+        cv2.putText(frame_orig, "{}{}".format(" Erreur moyenne par d'appariement [symboles/squence] : ", round(erreur_moy_appariement, 2)), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
     pourc_symb = pourcent_symbole_detected(matrice) #affiche le pourcentage de symboles détecté
-    cv2.putText(matrice_rgb, "{}{}{}".format(" Symboles detectes : ", round(pourc_symb, 2), "%"), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
-       
-    cv2.imshow('matrice des symboles detectes', matrice_rgb) #on affiche la matrice de symbole
+    cv2.putText(matrice_rgb, "{}{}{}".format(" Symboles detectes : ", round(pourc_symb, 2), "%"), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
-
-
-
-
-def symbole_identique_2_matrices_V3(matrice1, matrice2): #calcul de l'erreur quadratique moyenne entre deux matrices
-    h, w = np.array(matrice1).shape
-    diff = matrice1 - matrice2
-    err = np.sum(diff**2)
-    mse = err/float((h*w))
-    return round(mse, 5)
-
-
-
-def symbole_identique_2_matrices_V4(matrice1, matrice2): #calcul de l'erreur entre 2 matrices et ne pénalise pas si un symbole n'est pas détecté
-    juste = 0
-
-    nbr_row_matrice = np.size(matrice1, 0)
-    nbr_col_matrice = np.size(matrice1, 1)
-    
-    for i in range(nbr_row_matrice):
-        for j in range(nbr_col_matrice):
-            if matrice2[i][j] !=0: #si le symbole n'est pas détecté, on passe
-                if matrice1[i][j] == matrice2[i][j]:
-                    juste = juste + 1
-
-    pourcent_erreur = 100 * (1-(juste / (nbr_row_matrice*nbr_col_matrice)))       
-    return np.round(pourcent_erreur, 5)
-
-
-def comparison_mire(real_mire, matrice_symb): #fonction globale pour comparer la mire originelle avec la mire potentielle trouvée
-    #on va tourner la matrice de symbole pour qu'elle soit bien orientée en fonction de l'angle de la mire détecté
-
-    matrice_symb_rot_90 = np.rot90(matrice_symb, k=1)
-    matrice_symb_rot_180 = np.rot90(matrice_symb, k=2)
-    matrice_symb_rot_270 = np.rot90(matrice_symb, k=3)
-
-    pourcent_symb_valide_0 = symbole_identique_2_matrices_V4(real_mire, matrice_symb)
-    pourcent_symb_valide_90 = symbole_identique_2_matrices_V4(real_mire, matrice_symb_rot_90)
-    pourcent_symb_valide_180 = symbole_identique_2_matrices_V4(real_mire, matrice_symb_rot_180)
-    pourcent_symb_valide_270 = symbole_identique_2_matrices_V4(real_mire, matrice_symb_rot_270)
-
-    #print("Mean Square Error : lower the value, better the shape")
-    #print("r=0° : ",pourcent_symb_valide_0,)
-    #print("r=90° : ",pourcent_symb_valide_90)
-    #print("r=180° : ",pourcent_symb_valide_180)
-    #print("=270° : ",pourcent_symb_valide_270)
-
-    max_symb_valid = min(pourcent_symb_valide_0, pourcent_symb_valide_90, pourcent_symb_valide_180, pourcent_symb_valide_270)
-   
-    if max_symb_valid == pourcent_symb_valide_0:
-        rot_probable = 0
-    elif max_symb_valid == pourcent_symb_valide_90:
-        rot_probable = 90
-    elif max_symb_valid == pourcent_symb_valide_180:
-        rot_probable = 180
+    if affich_appariement:
+        affich_img = stack_img(matrice_rgb, frame_orig, type_stack = "horizontal") #on affiche l'image de la matrice de symbole
     else:
-        rot_probable = 270
-        
-    return rot_probable
+        affich_img = matrice_rgb
+    #affichage des lignes entre la matrice symbole et l'image de la mire
+    if appariements is not None and affich_appariement == True and len(appariements) != 0:
+        for appar in appariements : 
+            coord_x = int(appar[0][0]*30 + 15)
+            coord_y = int(appar[0][1]*30 + 15)
+            coord_x2 = int(appar[1][0] + 450)
+            coord_y2 = int(appar[1][1])
+            cv2.line(affich_img, (coord_x, coord_y), (coord_x2, coord_y2), (0, 70, 255), 1)
+
+    cv2.imshow('matrice des symboles detectes', affich_img) #on affiche la matrice de symbole
+
+
+def stack_img(image1, image2, type_stack): #fonction qui permet de superposer deux images soit sur la longueur, soit sur la largeur
+    hauteur1, largeur1, canaux1 = image1.shape
+    hauteur2, largeur2, canaux2 = image2.shape
+
+    # Trouver la différence de taille entre les deux images
+    diff_hauteur = abs(hauteur1 - hauteur2)
+    diff_largeur = abs(largeur1 - largeur2)
+
+    # Créer un cadre vide autour de l'image plus petite
+    if type_stack == "horizontal":
+        if hauteur1 < hauteur2:
+            image1 = cv2.copyMakeBorder(image1, 0, diff_hauteur, 0, 0, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+        else:
+            image2 = cv2.copyMakeBorder(image2, 0, diff_hauteur, 0, 0, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+    if type_stack == "vertical":
+        if largeur1 < largeur2:
+            image1 = cv2.copyMakeBorder(image1, 0, 0, 0, diff_largeur, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+        else:
+            image2 = cv2.copyMakeBorder(image2, 0, 0, 0, diff_largeur, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+
+    # Coller les deux images sur la longueur ou la largeur
+    if type_stack == "horizontal":
+        return  np.hstack((image1, image2))
+    elif type_stack == "vertical":
+        return np.vstack((image1, image2))
+    else:
+        return image1
 
 def detect_contours(img, contour_show = False):
     #détection des contours de l'image
@@ -252,59 +227,59 @@ def comparaison_sequences(posit_sequence_reel, posit_sequence_detectee, erreur_m
                  if pt_reel[1][i] != pt_dect[1][i]:
                      erreur += 1
             if erreur <= erreur_max:
-                
                 corresp_reel_detecte.append([pt_reel[0], pt_dect[0], pt_reel[1], erreur])
     
     return corresp_reel_detecte
 
 
-def tri_correspondances_OLD(sequences_corresp):
-    corresp_reel_detect_trie = sorted(sequences_corresp, key=lambda x: (x[0], x[3]))   #on trie par position puis par erreur
-    #on enlève les doublons car on peut avoir plusieurs correspondances pour un point de la mire réelle
-    for corr in corresp_reel_detect_trie:
-        print("corresp_reel_detect_NON_trie", corr)
-    resultat_final = []
-    if len(corresp_reel_detect_trie) >1:
-        resultat_final.append(corresp_reel_detect_trie[0])
-        for i in range(1, len(corresp_reel_detect_trie)):
-
-            if corresp_reel_detect_trie[i][0] != corresp_reel_detect_trie[i-1][0]:
-                #print("corresp_reel_detect_trie[i][0]", corresp_reel_detect_trie[i][0])
-                resultat_final.append(corresp_reel_detect_trie[i])
-    for corr in resultat_final:
-        print("corresp_reel_detect_trie", corr)
-    return resultat_final
-
-
-
-
 def tri_correspondances(sequences_corresp):
+  
 
+    #TRI PAR RAPPORT AUX POINTS REELS --> Il ne pas y avoir de doublons de points images pour un seul point réel
 
-    
-    corresp_reel_detect_trie = sorted(sequences_corresp, key=lambda x: (x[0], x[3]))   #on trie par position puis par erreur
-
-    corresp_triee = []
-    for cle, groupe in itertools.groupby(corresp_reel_detect_trie, lambda x: x[0]): #on crée un groupe par position de mire réelles
+    corresp_reel_trie = sorted(sequences_corresp, key=lambda x: (x[0], x[3]))   #on trie par position puis par erreur
+    corresp_triee_reel = []
+    for cle, groupe in itertools.groupby(corresp_reel_trie, lambda x: x[0]): #on crée un groupe par position de mire réelles
         valeurs_groupe = [[x[1], x[2], x[3]] for x in groupe]
-        corresp_triee.append((cle, valeurs_groupe))
+        corresp_triee_reel.append((cle, valeurs_groupe))
 
-
-    sequences_triees = []
-
-    for corr in corresp_triee:
-        #print("corresp_triee", corr)
-        nbre_appariements_possibles = len(corr[1]) #On regarde le nombre de points image qui pourraient correspondre à un seul point de la mire réelle")
+    sequences_pt_reel_triees = []
+    for corr in corresp_triee_reel:
+        nbre_appariements_possibles = len(corr[1]) #On regarde le nombre de points image qui pourraient correspondre à un seul point de la mire réelle
         if nbre_appariements_possibles == 1:
-            sequences_triees.append([corr[0], corr[1][0][0], corr[1][0][1], corr[1][0][2]])
+            sequences_pt_reel_triees.append([corr[0], corr[1][0][0], corr[1][0][1], corr[1][0][2]])
             #print("essai appariement", appariement)
         elif corr[1][0][2] < corr[1][1][2]: #si plusieurs appariements sont possibles, on sait que la plus petite erreur possible se trouve en première possition
             #si la première séquence a une erreur plus faible que la seconde, on prend la première, sinon on ne prend rien car on ne sait pas laquelle est la bonne
-            sequences_triees.append([corr[0], corr[1][0][0], corr[1][0][1], corr[1][0][2]])
+            sequences_pt_reel_triees.append([corr[0], corr[1][0][0], corr[1][0][1], corr[1][0][2]])
 
-    #for corr in sequences_triees:
-        #print("corresp_reel_detect_trie", corr)
-    return corresp_reel_detect_trie
+    #TRI PAR RAPPORT AUX POINTS REELS --> Il ne pas y avoir de doublons de points images pour un seul point réel 
+
+    sequences_pt_image_non_triees = []
+    for corr in sequences_pt_reel_triees: #on crée une liste de correspondances avec les points images non triés
+        sequences_pt_image_non_triees.append([corr[1], corr[0], corr[2], corr[3]])
+
+    corresp_img_trie = sorted(sequences_pt_image_non_triees, key=lambda x: (x[0], x[3]))   #on trie par position puis par erreur
+    corresp_triee_img = []
+    for cle, groupe in itertools.groupby(corresp_img_trie, lambda x: x[0]): #on crée un groupe par position de mire réelles
+        valeurs_groupe = [[x[1], x[2], x[3]] for x in groupe]
+        corresp_triee_img.append((cle, valeurs_groupe))
+
+    sequences_pt_img_triees = []
+    for corr in corresp_triee_img:
+        nbre_appariements_possibles = len(corr[1]) #On regarde le nombre de points image qui pourraient correspondre à un seul point de la mire réelle
+        if nbre_appariements_possibles == 1:
+            sequences_pt_img_triees.append([corr[0], corr[1][0][0], corr[1][0][1], corr[1][0][2]])
+            #print("essai appariement", appariement)
+        elif corr[1][0][2] < corr[1][1][2]: #si plusieurs appariements sont possibles, on sait que la plus petite erreur possible se trouve en première possition
+            #si la première séquence a une erreur plus faible que la seconde, on prend la première, sinon on ne prend rien car on ne sait pas laquelle est la bonne
+            sequences_pt_img_triees.append([corr[0], corr[1][0][0], corr[1][0][1], corr[1][0][2]])
+
+    sequences_triee_final= []
+    for corr in sequences_pt_img_triees: #on crée une liste de correspondances avec les points images non triés
+        sequences_triee_final.append([corr[1], corr[0], corr[2], corr[3]])
+
+    return sequences_triee_final
 
 
 global posit_sequence_reel_rot_0
@@ -330,10 +305,6 @@ def sequence_comparison_et_tri(posit_sequence_reel, posit_sequence_detectee, nbr
 
     corresp_reel_detect = comparaison_sequences(posit_sequence_reel, posit_sequence_detectee, nbr_erreur_max)
     corresp_reel_detect_trie = tri_correspondances(corresp_reel_detect)
-    #écrire le nom du thread : 
-    #print("thread name = ", threading.current_thread().name)
-    #print("Nombre de threads actifs = ", threading.active_count())
-    #print("rot = ", rot)
     if rot ==0 : 
         corresp_reel_detect_trie_rot_0  = corresp_reel_detect_trie
     elif rot ==90 :
@@ -401,7 +372,7 @@ def appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_
     thread_rot_180.join()
     thread_rot_270.join()
  
-  
+
     try : nbr_appariements_rot_0 = len(corresp_reel_detect_trie_rot_0)
     except  : nbr_appariements_rot_0 = 0
     try : nbr_appariements_rot_90 = len(corresp_reel_detect_trie_rot_90)
@@ -411,12 +382,6 @@ def appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_
     try : nbr_appariements_rot_270 = len(corresp_reel_detect_trie_rot_270)
     except : nbr_appariements_rot_270 = 0
 
-
-    #print("nbr_appariements_rot_0 : ", nbr_appariements_rot_0)
-    #print("nbr_appariements_rot_90 : ", nbr_appariements_rot_90)
-    #print("nbr_appariements_rot_180 : ", nbr_appariements_rot_180)
-    #print("nbr_appariements_rot_270 : ", nbr_appariements_rot_270)
-    #print("############################################")
     moy_erreur_appariements_rot_0 = 0
     moy_erreur_appariements_rot_90 = 0
     moy_erreur_appariements_rot_180 = 0
@@ -452,7 +417,6 @@ def appariement_symboles_4rotations(matrice_sequence_détectée, Mire_reel, nbr_
         moy_erreur_appariements_rot_270 = compteur_erreur/nbr_appariements_rot_270
     else : 
           moy_erreur_appariements_rot_270 = 1
-
 
 
     #recheche de l'angle optimal pour avoir le plus d'appariements possibles : 
