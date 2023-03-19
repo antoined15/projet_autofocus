@@ -140,7 +140,7 @@ while True:
 
     #détection des contours
 
-    contours = fct.detect_contours(frame, contour_show = True) #détection des contours avec canny
+    contours, canny_image = fct.detect_contours(frame) #détection des contours avec canny
     
     #DETECTION DES CERCLES ************************************************************************************************************************************************************************************
     for cnt in contours:    
@@ -326,11 +326,22 @@ while True:
         erreur_moy_appariement = None
 
 
-    fct.matrice_rgb_show(matrice_symb_moyenne, appariements, frame_orig, erreur_moy_appariement, affich_appariement = True ) # transforme la matrice symbole en image RGB et l'affiche
-    cv2.imshow('frame', frame) #on affiche l'image de base
-    cv2.imshow('frame_symb_only', frame_symb_only) #on affiche l'image avec les symboles
-    cv2.imshow('mire', mire) #on affiche la mire
+    img_rgb = fct.matrice_rgb_show(matrice_symb_moyenne, appariements, frame_orig, erreur_moy_appariement, affich_appariement = True ) # transforme la matrice symbole en image RGB et l'affiche
+    cv2.imshow('Appariement des symboles : mire réelle, image mire détectée', img_rgb) #on affiche la matrice de symbole
+    #cv2.imshow('frame', frame) #on affiche l'image de base
+    #cv2.imshow('frame_symb_only', frame_symb_only) #on affiche l'image avec les symboles
+    #cv2.imshow('mire', mire) #on affiche la mire
+    #cv2.imshow('Contours', cv2.cvtColor(canny_image, cv2.COLOR_GRAY2RGB)) #on affiche les contours détectés 
 
+
+    img_stack1 = fct.stack_img(frame, canny_image, "horizontal")
+    img_stack_2 = fct.stack_img(frame_symb_only, mire, "horizontal")
+    #cv2.imshow('img_stack1', img_stack1) #on affiche les contours détectés
+    #cv2.imshow('img_stack_2', img_stack_2) #on affiche les contours détectés
+
+    img_stack_3 = fct.stack_img(img_stack1, img_stack_2, "vertical")
+    cv2.imshow('Reconnaissance de la mire', img_stack_3) #on affiche les contours détectés
+    
     if cv2.waitKey(1) == ord('q'): #waitkey(0) --> only one frame, waitkey(1) --> video 
         break #si q est appuyé, on quitte la boucle
 

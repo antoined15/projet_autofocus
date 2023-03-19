@@ -101,7 +101,7 @@ def matrice_rgb_show(matrice, appariements, frame_orig, erreur_moy_appariement, 
             erreur = str(appar[3])
             cv2.putText(matrice_rgb, erreur, (coord_x,coord_y ), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
 
-    if affich_appariement == True and appariements is not None : 
+    if affich_appariement == True and appariements is not None and len(appariements) != 0: 
         cv2.putText(frame_orig, "{}{}".format(" Nombre d'appariements trouves : ", len(appariements)), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
         cv2.putText(frame_orig, "{}{}".format(" Erreur moyenne par d'appariement [symboles/squence] : ", round(erreur_moy_appariement, 2)), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  
     pourc_symb = pourcent_symbole_detected(matrice) #affiche le pourcentage de symboles détecté
@@ -120,11 +120,18 @@ def matrice_rgb_show(matrice, appariements, frame_orig, erreur_moy_appariement, 
             coord_y2 = int(appar[1][1])
             cv2.line(affich_img, (coord_x, coord_y), (coord_x2, coord_y2), (0, 70, 255), 1)
 
-    cv2.imshow('matrice des symboles detectes', affich_img) #on affiche la matrice de symbole
+    return affich_img
 
 
 def stack_img(image1, image2, type_stack): #fonction qui permet de superposer deux images soit sur la longueur, soit sur la largeur
-    hauteur1, largeur1, canaux1 = image1.shape
+
+    # Convertir les images en couleur si elles sont en niveaux de gris
+    try : image1 = cv2.cvtColor(image1, cv2.COLOR_GRAY2BGR)
+    except : pass
+    try : image2 = cv2.cvtColor(image2, cv2.COLOR_GRAY2BGR)
+    except : pass
+
+    hauteur1, largeur1, canaux1 = image1.shape  
     hauteur2, largeur2, canaux2 = image2.shape
 
     # Trouver la différence de taille entre les deux images
@@ -151,16 +158,13 @@ def stack_img(image1, image2, type_stack): #fonction qui permet de superposer de
     else:
         return image1
 
-def detect_contours(img, contour_show = False):
+def detect_contours(img):
     #détection des contours de l'image
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) #conversion de l'image en niveau de gris
     canny_image = cv2.Canny(gray, 50,150) #Appliquer un filtre de Canny sur l'image
     contours, _ = cv2.findContours(canny_image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE) #Détection des contours 
     
-    if (contour_show):
-        cv2.imshow('Contours', cv2.cvtColor(canny_image, cv2.COLOR_GRAY2RGB)) #on affiche les contours détectés 
-
-    return contours
+    return contours, canny_image
 
 
 def suppr_symboles_detectes_non_pertinents (points, points_et_type_et_rayon, treshold):
