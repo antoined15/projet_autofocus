@@ -1,4 +1,4 @@
-import function as fct
+import etude_comparative_fct as fct
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
