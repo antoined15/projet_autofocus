@@ -14,7 +14,7 @@ import cv2
 import Reco_mire_fct as fct
 
 
-appareil_utilise = "camera" #webcam ou camera
+appareil_utilise = "autofocus" #webcam ou camera
 
 if appareil_utilise == "camera":
     from picamera2 import Picamera2
@@ -22,6 +22,15 @@ if appareil_utilise == "camera":
     picam2 = Picamera2()
     picam2.configure(picam2.create_preview_configuration(main={"format":'RGB888',"size":(640,480)})) #VOIR ICI POUR PRENDRE UNE RESOLUTION PLUS GRANDE ET POUR AVOIR UNE RESOLUTION QUI PERMET LE BINNING DE LA CAMERA
     picam2.start()
+
+elif appareil_utilise == "autofocus":
+    from picamera2 import Picamera2
+    from libcamera import controls
+
+    picam2 = Picamera2()
+    picam2.configure(picam2.create_preview_configuration(main={"format":'RGB888',"size":(640,480)})) #VOIR ICI POUR PRENDRE UNE RESOLUTION PLUS GRANDE ET POUR AVOIR UNE RESOLUTION QUI PERMET LE BINNING DE LA CAMERA
+    picam2.start()
+    picam2.set_controls({"AfMode": controls.AfModeEnum.Continuous})
 
 else :
     cap = cv2.VideoCapture(0)
@@ -128,7 +137,7 @@ while True:
     #LIGNE CODE DEBUT************************************************************************************************************************************************************************************
     
     #prendre une image
-    if appareil_utilise == "camera":
+    if appareil_utilise == "camera" or appareil_utilise == "autofocus":
         frame = picam2.capture_array()
     elif appareil_utilise == "webcam":
         ret, frame = cap.read()
@@ -142,7 +151,6 @@ while True:
     mire = np.full(frame.shape[:2], 0, dtype=np.uint8) #création d'une image noire sauf à l'endroit de la mire pour le calcul de la variance de l'image
 
     #détection des contours
-
     contours, canny_image = fct.detect_contours(frame) #détection des contours avec canny
     
     #DETECTION DES CERCLES ************************************************************************************************************************************************************************************
@@ -330,7 +338,7 @@ while True:
 
 
     img_rgb = fct.matrice_rgb_show(matrice_symb_moyenne, appariements, frame_orig, erreur_moy_appariement, affich_appariement = True ) # transforme la matrice symbole en image RGB et l'affiche
-    cv2.imshow('Appariement des symboles : mire réelle, image mire détectée', img_rgb) #on affiche la matrice de symbole
+    cv2.imshow('Appariement des symboles : mire reelle, image mire detectee', img_rgb) #on affiche la matrice de symbole
     #cv2.imshow('frame', frame) #on affiche l'image de base
     #cv2.imshow('frame_symb_only', frame_symb_only) #on affiche l'image avec les symboles
     #cv2.imshow('mire', mire) #on affiche la mire

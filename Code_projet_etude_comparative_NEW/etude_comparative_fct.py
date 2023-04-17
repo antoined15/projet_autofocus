@@ -3,38 +3,65 @@ import time
 import numpy as np
 import random
 import cv2
+from Focuser import Focuser
+from picamera2 import Picamera2
+from pantilt import Pantilt
 
 
+def position_tourelle(pt,X, Y):
+	xmap = pt.map(X,0,180,200,800)
+	ymap = pt.map(Y,0,90,310,650)
+	pt.position(xmap,ymap)
+	time.sleep(2)
+	print("Tourelle déplacée : \tmoteur 1 = ", X, " ; \tmoteur 2 = ", Y)
 
-
-def position_tourelle(X, Y):
-	#envoi sur le port série de la position demandée
-	#attente que le déplacement soit terminé
-	#print("Tourelle déplacée : \tmoteur 1 = ", X, " ; \tmoteur 2 = ", Y)
-	pass
-
-
-def position_moteur_flou(cap, type_camera,  pos_M):
-
+def position_moteur_flou(focuser, type_camera,  pos_M):
 	tempo = 0.5 #temps d'attente entre chaque modification de la position du moteur autofocus
-	match type_camera:
-		case "arducam":
-			#Programme de modification de la position du moteur autofocus pour les arducam --> A TESTER
-			cap.set(cv2.CAP_PROP_AUTOFOCUS, pos_M)
-			time.sleep(tempo)	
-		case "raspberry":
-			#Programme de modification de la position du moteur autofocus pour les raspberry --> A TESTER
-			cap.set(cv2.CAP_PROP_AUTOFOCUS, pos_M)
-			time.sleep(tempo)	
-			pass
-		case _: #si type_tourelle n'est pas "arducam" ou "raspberry"
-			pass
+	if type_camera == "arducam_64mp" or "arducam_16mp":
+		#Programme de modification de la position du moteur autofocus pour les arducam --> A TESTER
+		focuser.set(Focuser.OPT_FOCUS,pos_M)
+		time.sleep(tempo)
+	else:
+		pass
 
 	#attente que le déplacement soit terminé
 	#print("Moteur autofocus déplacé : \tposition = ", pos_M)
 	pass
 
+def trie_liste(x,y1,y2,y3,y4,y5,y6 = []):
 
+	x_y1 = list(zip(x,y1))
+	x_y1 = sorted(x_y1, key=lambda l: l[0])
+	y1 = [t[1] for t in x_y1]
+
+	x_y2 = list(zip(x,y2))
+	x_y2 = sorted(x_y2, key=lambda l: l[0])
+	y2 = [t[1] for t in x_y2]
+
+	x_y3 = list(zip(x,y3))
+	x_y3 = sorted(x_y3, key=lambda l: l[0])
+	y3 = [t[1] for t in x_y3]
+
+	x_y4 = list(zip(x,y4))
+	x_y4 = sorted(x_y4, key=lambda l: l[0])
+	y4 = [t[1] for t in x_y4]
+
+	x_y5 = list(zip(x,y5))
+	x_y5 = sorted(x_y5, key=lambda l: l[0])
+	y5 = [t[1] for t in x_y5]
+
+	if y6 != []:
+		x_y6 = list(zip(x,y6))
+		x_y6 = sorted(x_y6, key=lambda l: l[0])
+		y6 = [t[1] for t in x_y6]
+
+	x = [t[0] for t in x_y1]
+
+	if y6 != []:
+		return x ,y1 ,y2, y3, y4, y5, y6
+	else:
+		return x ,y1 ,y2, y3, y4, y5
+	
 
 def detection_cercles(contours, canny_image_cont):
 
@@ -172,10 +199,10 @@ def nbre_symboles_mires_detectes_moyenne(nbre_moy, cap, pos_T, pos_M, color_fram
 	mean_X_mire = []
 	mean_Y_mire = []
 	angle_mire = []
-	box_mire = [[[0, 0], [0, 0], [0, 0], [0, 0]]]
+	box_mire = []
 
 	for i in range(nbre_moy): 
-		ret, frame = cap.read() #prendre une image
+		frame = cap.capture_array() #prendre une image
 		nbr_symb, box, mean_x, mean_y, angle = nbre_symboles_mire_detectes(frame) #on compte le nombre de symboles de la mire détectés 
 		nbr_symboles.append(nbr_symb)
 		mean_X_mire.append(mean_x)
@@ -284,7 +311,7 @@ def variance_of_image_blur_moyenne(cap,best_box, nbr_mesures, color_frame, taill
 	fm_picture_variability_moy = 0
 
 	for i in range(nbr_mesures):
-		ret, frame = cap.read() #prendre une image
+		frame = cap.capture_array() #prendre une image
 
 		fm_sobel, fm_laplacian, fm_canny, fm_entropy, fm_corner_counter, fm_picture_variability = variance_of_image_blur(frame, best_box,color_frame, taille_text_frame, pos_T, pos_M)
 

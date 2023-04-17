@@ -2,58 +2,60 @@ import etude_comparative_fct as fct
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
-import mplcursors
+from Focuser import Focuser
+from picamera2 import Picamera2
+from pantilt import Pantilt
 
 ########INPUTS################################################################################
 
-pas_focus = 100
-nbre_image_moy_mesure = 5 #chaque résultat de mesure est la moyenne de nbre_image_moy_mesure images
+pas_focus = 50
+pas_focus_fin = 5
+nbre_image_moy_mesure = 2 #chaque résultat de mesure est la moyenne de nbre_image_moy_mesure images
+nbre_image_moy_mesure_fin = 5
 
 color_frame = (0, 255, 0) #couleur du texte affiché sur l'image (vert)
 taille_text_frame = 0.5 #taille du texte affiché sur l'image
 
+Position_tourelle = [[0, 15], [15, 35]]#, [45, 45], [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
 
-Position_tourelle = [[0, 0], [0, 45]]#, [45, 45], [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
+camera64mp_max_focus_step = 1023
+camera16mp_max_focus_step = 4095
 
+appareil_utilise = "arducam_64mp" #webcam ou arducam ou raspberry
 
-appareil_utilise = "webcam" #webcam ou arducam ou raspberry
-
-if appareil_utilise == "arducam" or appareil_utilise == "raspberry":
-    from picamera2 import Picamera2
-
-    picam2 = Picamera2()
-    picam2.configure(picam2.create_preview_configuration(main={"format":'RGB888',"size":(640,480)}))
-    picam2.start()
-
-else :
-    cap = cv2.VideoCapture(0)
-
-
+picam2 = Picamera2()
+picam2.configure(picam2.create_preview_configuration(main={"format":'RGB888',"size":(640,480)}))
+picam2.start()
+focuser = Focuser("/dev/v4l-subdev1")
+focuser.step = 0
 
 #Initialisaiton
 
-if appareil_utilise == "arducam":
-
-	Vmin_moteur_autofocus = cap.get(cv2.CAP_PROP_AUTOFOCUS_MINIMUM)
-	Vmax_moteur_autofocus = cap.get(cv2.CAP_PROP_AUTOFOCUS_MAXIMUM)
-
-elif appareil_utilise == "raspberry":
-	Vmin_moteur_autofocus = cap.get(cv2.CAP_PROP_AUTOFOCUS_MINIMUM)
-	Vmax_moteur_autofocus = cap.get(cv2.CAP_PROP_AUTOFOCUS_MAXIMUM)
+if appareil_utilise == "arducam_64mp":
+	Vmin_moteur_autofocus = 0
+	Vmax_moteur_autofocus = camera64mp_max_focus_step
+elif appareil_utilise == "arducam_16mp":
+	Vmin_moteur_autofocus = 0
+	Vmax_moteur_autofocus = camera16mp_max_focus_step
 else :
 	Vmin_moteur_autofocus = 0
 	Vmax_moteur_autofocus = 1000
 
 print("Type de caméra : ", appareil_utilise, "\tVmin_moteur_autofocus = ", Vmin_moteur_autofocus, "\tVmax_moteur_autofocus = ", Vmax_moteur_autofocus)	
 
+# Initialisation de la tourelle pan-tilt
+pt = Pantilt()
 
+if pt.connect() == -1:
+	print("Impossible de connecter la tourelle pan-tilt")
+	exit()
 
 ########MAIN################################################################################
 
 for pos_T in Position_tourelle:
 
 	#print("---------------------")
-	fct.position_tourelle(pos_T[0], pos_T[1])
+	fct.position_tourelle(pt,pos_T[0], pos_T[1])
 
 
 	best_focus_by_pos = []
@@ -66,9 +68,9 @@ for pos_T in Position_tourelle:
 	
 	for pos_M in range(Vmin_moteur_autofocus, Vmax_moteur_autofocus + pas_focus, pas_focus): #Recherche de la position de la mire sur l'image globale
 
-		fct.position_moteur_flou(cap, appareil_utilise, pos_M)
+		fct.position_moteur_flou(focuser, appareil_utilise, pos_M)
 
-		nbr_symb_moy, box_mire_moy, mean_X_mire_moy, mean_Y_mire_moy, angle_mire_moy = fct.nbre_symboles_mires_detectes_moyenne(nbre_image_moy_mesure, cap, pos_T, pos_M, color_frame, taille_text_frame) #on calcule le nombre de symboles moyens sur nbre_image_moy_mesure images
+		nbr_symb_moy, box_mire_moy, mean_X_mire_moy, mean_Y_mire_moy, angle_mire_moy = fct.nbre_symboles_mires_detectes_moyenne(nbre_image_moy_mesure, picam2, pos_T, pos_M, color_frame, taille_text_frame) #on calcule le nombre de symboles moyens sur nbre_image_moy_mesure images
 		best_focus_by_pos.append(pos_M)
 		bestnbr_symbole_by_pos.append(nbr_symb_moy)
 		best_angle_by_pos.append(angle_mire_moy)
@@ -85,6 +87,31 @@ for pos_T in Position_tourelle:
 	best_mean_X = best_mean_X_by_pos[best_index]
 	best_mean_Y = best_mean_Y_by_pos[best_index]
 
+	for pos_M in range(best_focus-75,best_focus+75,pas_focus_fin):
+		fct.position_moteur_flou(focuser, appareil_utilise, pos_M)
+
+		nbr_symb_moy, box_mire_moy, mean_X_mire_moy, mean_Y_mire_moy, angle_mire_moy = fct.nbre_symboles_mires_detectes_moyenne(nbre_image_moy_mesure_fin, picam2, pos_T, pos_M, color_frame, taille_text_frame) #on calcule le nombre de symboles moyens sur nbre_image_moy_mesure images
+		best_focus_by_pos.append(pos_M)
+		bestnbr_symbole_by_pos.append(nbr_symb_moy)
+		best_angle_by_pos.append(angle_mire_moy)
+		best_box_by_pos.append(box_mire_moy)
+		best_mean_X_by_pos.append(mean_X_mire_moy)
+		best_mean_Y_by_pos.append(mean_Y_mire_moy)
+
+	best_focus_by_pos,bestnbr_symbole_by_pos,best_angle_by_pos,best_box_by_pos,best_mean_X_by_pos,best_mean_Y_by_pos = fct.trie_liste(best_focus_by_pos,bestnbr_symbole_by_pos,best_angle_by_pos,best_box_by_pos,best_mean_X_by_pos,best_mean_Y_by_pos)
+
+	best_index = bestnbr_symbole_by_pos.index(max(bestnbr_symbole_by_pos))
+	best_focus = best_focus_by_pos[best_index]
+	bestnbr_symbole = bestnbr_symbole_by_pos[best_index]
+	best_angle = best_angle_by_pos[best_index]
+	best_box = best_box_by_pos[best_index]
+	best_mean_X = best_mean_X_by_pos[best_index]
+	best_mean_Y = best_mean_Y_by_pos[best_index]
+	
+
+	#On remet la camera à la meilleur position pour prendre une capture
+	#fct.position_moteur_flou(f)
+
 	#print("Meilleure position autofocus trouvé : ", best_focus)
 	#print("Mire en position : ", best_mean_X, ";", best_mean_Y)
 
@@ -100,9 +127,7 @@ for pos_T in Position_tourelle:
 	plt.legend(loc = 'lower left')
 	plt.xlabel('Position du moteur autofocus')
 	plt.ylabel('Nombre de symboles détectés')
-	plt.title(titre)
-	mplcursors.cursor( hover=True)#, annotations=True, annotation_kwargs=dict(fontsize=10, color='red'))
-	#plt.show(block = False)
+	plt.title(titre)	#plt.show(block = False)
 
 
 	if best_mean_X ==0 or best_mean_Y == 0: #si la mire n'a pas été trouvée, envoie une erreur
@@ -119,7 +144,9 @@ for pos_T in Position_tourelle:
 
 		for pos_M in range(Vmin_moteur_autofocus, Vmax_moteur_autofocus + pas_focus, pas_focus): #Calcul de la valeur de flou uniquement sur l'image de la mire
 			
-			fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_entropy_moy, fm_corner_counter_moy, fm_picture_variability_moy = fct.variance_of_image_blur_moyenne(cap,best_box, nbre_image_moy_mesure, color_frame, taille_text_frame, pos_T, pos_M)
+			fct.position_moteur_flou(focuser, appareil_utilise, pos_M)
+
+			fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_entropy_moy, fm_corner_counter_moy, fm_picture_variability_moy = fct.variance_of_image_blur_moyenne(picam2,best_box, nbre_image_moy_mesure, color_frame, taille_text_frame, pos_T, pos_M)
 			sobel.append(fm_sobel_moy)
 			laplacian.append(fm_laplacian_moy)
 			canny.append(fm_canny_moy)
@@ -127,6 +154,21 @@ for pos_T in Position_tourelle:
 			corner_counter.append(fm_corner_counter_moy)
 			picture_variability.append(fm_picture_variability_moy)
 			posit_M.append(pos_M)
+
+		for pos_M in range(best_focus-75,best_focus+75,pas_focus_fin):
+			fct.position_moteur_flou(focuser, appareil_utilise, pos_M)
+
+			fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_entropy_moy, fm_corner_counter_moy, fm_picture_variability_moy = fct.variance_of_image_blur_moyenne(picam2,best_box, nbre_image_moy_mesure, color_frame, taille_text_frame, pos_T, pos_M)
+			sobel.append(fm_sobel_moy)
+			laplacian.append(fm_laplacian_moy)
+			canny.append(fm_canny_moy)
+			picture_entropy.append(fm_entropy_moy)
+			corner_counter.append(fm_corner_counter_moy)
+			picture_variability.append(fm_picture_variability_moy)
+			posit_M.append(pos_M)
+
+		posit_M,laplacian,canny,picture_entropy,corner_counter,picture_variability,sobel = fct.trie_liste(posit_M,laplacian,canny,picture_entropy,corner_counter,picture_variability,sobel)
+
 
 	
 		fig = plt.figure()
@@ -144,13 +186,12 @@ for pos_T in Position_tourelle:
 		plt.ylabel('Valeur de flou')
 		plt.yscale('log')
 		plt.title(titre)
-		mplcursors.cursor( hover=True)#, annotations=True, annotation_kwargs=dict(fontsize=10, color='red'))
 		plt.show(block = False)
 
 		cv2.destroyWindow('mire') #on ferme la fenêtre des contours
 
-cap.release()
+picam2.stop()
 cv2.destroyAllWindows()
 
-plt.show() #pour bloquer les graphes et qu'ils ne disparaissent pas
+plt.show(block = True) #pour bloquer les graphes et qu'ils ne disparaissent pas
 #FAIRE GRAPHES MATPLOTLIB
