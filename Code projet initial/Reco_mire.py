@@ -14,7 +14,7 @@ import cv2
 import Reco_mire_fct as fct
 
 
-appareil_utilise = "webcam" #webcam ou camera
+appareil_utilise = "camera" #webcam ou camera
 
 if appareil_utilise == "camera":
     from picamera2 import Picamera2
@@ -27,7 +27,7 @@ else :
     cap = cv2.VideoCapture(0)
     # Afficher la résolution de la caméra
     print("Résolution de la caméra : ", cap.get(cv2.CAP_PROP_FRAME_WIDTH), "x", cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    
+
 
 #####Variables globales##############################################################################################################
 mat_dim_mire = np.zeros((15,15)) #Dimensions de la matrice
