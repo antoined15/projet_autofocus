@@ -20,11 +20,14 @@ if appareil_utilise == "camera":
     from picamera2 import Picamera2
 
     picam2 = Picamera2()
-    picam2.configure(picam2.create_preview_configuration(main={"format":'RGB888',"size":(640,480)}))
+    picam2.configure(picam2.create_preview_configuration(main={"format":'RGB888',"size":(640,480)})) #VOIR ICI POUR PRENDRE UNE RESOLUTION PLUS GRANDE ET POUR AVOIR UNE RESOLUTION QUI PERMET LE BINNING DE LA CAMERA
     picam2.start()
 
 else :
     cap = cv2.VideoCapture(0)
+    # Afficher la résolution de la caméra
+    print("Résolution de la caméra : ", cap.get(cv2.CAP_PROP_FRAME_WIDTH), "x", cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    
 
 #####Variables globales##############################################################################################################
 mat_dim_mire = np.zeros((15,15)) #Dimensions de la matrice
