@@ -1,5 +1,6 @@
 import serial
 import numpy as np
+import time
 
 # '/dev/ttyUSB0', 57600
 
@@ -35,11 +36,24 @@ class Pantilt:
     def connect(self):
         try:
             self.ser = serial.Serial(self.com_port, self.com_speed, timeout=1)
+            self.init()
         except:
             print(f'Error opening serial port {self.com_port}')
             return -1
 
         return 1
+
+    def init(self):
+        x = [0,100,0]
+        y = [0,100,13]
+
+        for i in x:
+            for j in y:
+                xmap = self.map(i,0,180,200,800)
+                ymap = self.map(j,0,90,310,650)
+                self.position(xmap,ymap)
+                time.sleep(0.3)
+        
 
     """Disconnect from the pantilt"""
     def disconnect(self):

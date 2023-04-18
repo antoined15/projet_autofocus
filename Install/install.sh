@@ -11,10 +11,13 @@ if [ -d "./tmp" ]; then
 else
     mkdir ./tmp
 fi
-cd ./tmp
+cd tmp/
 
 # Téléchargement du dépot github
-git clone git@github.com:antoined15/projet_autofocus.git autofocus_git
+#git clone git@github.com:antoined15/projet_autofocus.git autofocus_git
+wget -O autofocus.zip https://github.com/antoined15/projet_autofocus/archive/refs/heads/main.zip
+unzip autofocus.zip 
+mv projet_autofocus-main autofocus_git
 
 # Téléchargement de Arduino IDE
 wget https://downloads.arduino.cc/arduino-1.8.19-linuxaarch64.tar.xz
@@ -55,6 +58,10 @@ chmod +x install_pivariety_pkgs.sh
 ./install_pivariety_pkgs.sh -p libcamera_dev
 ./install_pivariety_pkgs.sh -p libcamera_apps
 ./install_pivariety_pkgs.sh -p imx519_kernel_driver
+#./install_pivariety_pkgs.sh -p imx708_kernel_driver
+
+# Installation des libraries python
+pip install numpy==1.24.2 matplotlib==3.7.1 mplcursors==0.5.2 opencv-python-headless==4.7.0.72 pyqt5==5.15.2 pyserial==3.5b0
 
 # Suppression du dossier tmp
 cd ..

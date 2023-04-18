@@ -11,7 +11,9 @@ from pantilt import Pantilt
 def position_tourelle(pt,X, Y):
 	xmap = pt.map(X,0,180,200,800)
 	ymap = pt.map(Y,0,90,310,650)
-	pt.position(xmap,ymap)
+	for i in range(5):
+		pt.position(xmap,ymap)
+		time.sleep(0.1)
 	time.sleep(2)
 	print("Tourelle déplacée : \tmoteur 1 = ", X, " ; \tmoteur 2 = ", Y)
 
@@ -216,7 +218,7 @@ def nbre_symboles_mires_detectes_moyenne(nbre_moy, cap, pos_T, pos_M, color_fram
 
 		cv2.putText(frame, "{}{}{}{}".format(" Position de la tourelle :  ",pos_T[0],";", pos_T[1]), (0, 20), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)  
 		cv2.putText(frame, "{}".format(" Recherche de la position de la mire"), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)  
-		cv2.putText(frame, "{}{}{}{}".format(" Prise d'image : ", i, "/", nbre_moy), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)  
+		cv2.putText(frame, "{}{}{}{}".format(" Prise d'image : ", i+1, "/", nbre_moy), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA)  
 		cv2.putText(frame, "{}{}".format(" Position du moteur autofocus :  ",pos_M), (0, 80), cv2.FONT_HERSHEY_SIMPLEX, taille_text_frame, color_frame, 1, cv2.LINE_AA) 
 		cv2.imshow('frame', frame) #on affiche l'image de base
 

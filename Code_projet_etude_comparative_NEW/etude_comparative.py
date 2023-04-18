@@ -1,13 +1,20 @@
-import etude_comparative_fct as fct
 import numpy as np
 import matplotlib.pyplot as plt
+import mplcursors
+import os
 import cv2
+import csv
+import time
+
+import etude_comparative_fct as fct
 from Focuser import Focuser
 from picamera2 import Picamera2
 from pantilt import Pantilt
 
+
 ########INPUTS################################################################################
 
+delta_pas_fin = 50
 pas_focus = 50
 pas_focus_fin = 5
 nbre_image_moy_mesure = 2 #chaque résultat de mesure est la moyenne de nbre_image_moy_mesure images
@@ -16,7 +23,7 @@ nbre_image_moy_mesure_fin = 5
 color_frame = (0, 255, 0) #couleur du texte affiché sur l'image (vert)
 taille_text_frame = 0.5 #taille du texte affiché sur l'image
 
-Position_tourelle = [[0, 15], [15, 35]]#, [45, 45], [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
+Position_tourelle = [[0, 13], [15, 35], [0, 60]]#, [45, 45], [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
 
 camera64mp_max_focus_step = 1023
 camera16mp_max_focus_step = 4095
@@ -30,6 +37,8 @@ focuser = Focuser("/dev/v4l-subdev1")
 focuser.step = 0
 
 #Initialisaiton
+
+os.system("mkdir data")
 
 if appareil_utilise == "arducam_64mp":
 	Vmin_moteur_autofocus = 0
@@ -87,7 +96,7 @@ for pos_T in Position_tourelle:
 	best_mean_X = best_mean_X_by_pos[best_index]
 	best_mean_Y = best_mean_Y_by_pos[best_index]
 
-	for pos_M in range(best_focus-75,best_focus+75,pas_focus_fin):
+	for pos_M in range(best_focus-delta_pas_fin,best_focus+delta_pas_fin,pas_focus_fin):
 		fct.position_moteur_flou(focuser, appareil_utilise, pos_M)
 
 		nbr_symb_moy, box_mire_moy, mean_X_mire_moy, mean_Y_mire_moy, angle_mire_moy = fct.nbre_symboles_mires_detectes_moyenne(nbre_image_moy_mesure_fin, picam2, pos_T, pos_M, color_frame, taille_text_frame) #on calcule le nombre de symboles moyens sur nbre_image_moy_mesure images
@@ -107,17 +116,14 @@ for pos_T in Position_tourelle:
 	best_box = best_box_by_pos[best_index]
 	best_mean_X = best_mean_X_by_pos[best_index]
 	best_mean_Y = best_mean_Y_by_pos[best_index]
-	
 
-	#On remet la camera à la meilleur position pour prendre une capture
-	#fct.position_moteur_flou(f)
+	data = list(zip(best_focus_by_pos,bestnbr_symbole_by_pos,best_angle_by_pos,best_box_by_pos,best_mean_X_by_pos,best_mean_Y_by_pos))
 
-	#print("Meilleure position autofocus trouvé : ", best_focus)
-	#print("Mire en position : ", best_mean_X, ";", best_mean_Y)
+	# Save in csv
+	with open(f'data/symbole_step({pos_T[0]},{pos_T[1]}).csv','w', newline='', encoding="utf-8") as csv_file:
+		csv_writer = csv.writer(csv_file, delimiter=';', quotechar='"',quoting=csv.QUOTE_MINIMAL)
+		csv_writer.writerows(data)
 
-	#cv2.destroyWindow('Contours & mire') #on ferme la fenêtre des contours
-
-	#GRAPHES
 	fig = plt.figure()
 	
 	titre = "Recherche mire --> position de la tourelle : " + str(pos_T[0]) + ";" + str(pos_T[1])
@@ -146,7 +152,7 @@ for pos_T in Position_tourelle:
 			
 			fct.position_moteur_flou(focuser, appareil_utilise, pos_M)
 
-			fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_entropy_moy, fm_corner_counter_moy, fm_picture_variability_moy = fct.variance_of_image_blur_moyenne(picam2,best_box, nbre_image_moy_mesure, color_frame, taille_text_frame, pos_T, pos_M)
+			fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_entropy_moy, fm_corner_counter_moy, fm_picture_variability_moy = fct.variance_of_image_blur_moyenne(picam2,best_box, nbre_image_moy_mesure_fin, color_frame, taille_text_frame, pos_T, pos_M)
 			sobel.append(fm_sobel_moy)
 			laplacian.append(fm_laplacian_moy)
 			canny.append(fm_canny_moy)
@@ -155,10 +161,10 @@ for pos_T in Position_tourelle:
 			picture_variability.append(fm_picture_variability_moy)
 			posit_M.append(pos_M)
 
-		for pos_M in range(best_focus-75,best_focus+75,pas_focus_fin):
+		for pos_M in range(best_focus-delta_pas_fin,best_focus+delta_pas_fin,pas_focus_fin):
 			fct.position_moteur_flou(focuser, appareil_utilise, pos_M)
 
-			fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_entropy_moy, fm_corner_counter_moy, fm_picture_variability_moy = fct.variance_of_image_blur_moyenne(picam2,best_box, nbre_image_moy_mesure, color_frame, taille_text_frame, pos_T, pos_M)
+			fm_sobel_moy, fm_laplacian_moy, fm_canny_moy, fm_entropy_moy, fm_corner_counter_moy, fm_picture_variability_moy = fct.variance_of_image_blur_moyenne(picam2,best_box, nbre_image_moy_mesure_fin, color_frame, taille_text_frame, pos_T, pos_M)
 			sobel.append(fm_sobel_moy)
 			laplacian.append(fm_laplacian_moy)
 			canny.append(fm_canny_moy)
@@ -169,8 +175,14 @@ for pos_T in Position_tourelle:
 
 		posit_M,laplacian,canny,picture_entropy,corner_counter,picture_variability,sobel = fct.trie_liste(posit_M,laplacian,canny,picture_entropy,corner_counter,picture_variability,sobel)
 
+		data = list(zip(posit_M,laplacian,canny,picture_entropy,corner_counter,picture_variability,sobel))
 
-	
+		with open(f'data/method_step({pos_T[0]},{pos_T[1]}).csv','w', newline='', encoding="utf-8") as csv_file:
+			csv_writer = csv.writer(csv_file, delimiter=';', quotechar='"',quoting=csv.QUOTE_MINIMAL)
+			csv_writer.writerows(data)
+
+		# Save in csv
+
 		fig = plt.figure()
 		#GRAPHES
 		titre = "Calcul flou --> position de la tourelle : " + str(pos_T[0]) + ";" + str(pos_T[1])
@@ -186,6 +198,7 @@ for pos_T in Position_tourelle:
 		plt.ylabel('Valeur de flou')
 		plt.yscale('log')
 		plt.title(titre)
+		mplcursors.cursor(hover=True)
 		plt.show(block = False)
 
 		cv2.destroyWindow('mire') #on ferme la fenêtre des contours
