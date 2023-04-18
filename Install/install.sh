@@ -31,17 +31,14 @@ arduino_executable=$(which arduino || which arduino-cli)
 
 if [ -z "$arduino_executable" ]; then
     echo "Arduino n'est pas installé sur le système."
-else
-    echo "Arduino est installé sur ce système."
     cd arduino-1.8.19/
     sudo ./install.sh
     cd ..
+else
+    echo "Arduino est installé sur ce système."
 fi
 
-# Installation de l'environnement Arduino
-cd arduino-1.8.19/
-sudo ./install.sh
-cd ..
+
 
 # Copie des fichier pour arduino IDE
 if [ -d "/home/pi/Arduino" ]; then
@@ -50,18 +47,20 @@ else
     mkdir /home/pi/Arduino
 fi
 
-cp -R autofocus_git/test_communication_tourelle/Arduino /home/pi/Arduino
+cp -R autofocus_git/test_communication_tourelle/Arduino /home/pi/
 
 # Installation des drivers caméra
 chmod +x install_pivariety_pkgs.sh
 
+sudo apt update
+
 ./install_pivariety_pkgs.sh -p libcamera_dev
 ./install_pivariety_pkgs.sh -p libcamera_apps
 ./install_pivariety_pkgs.sh -p imx519_kernel_driver
-#./install_pivariety_pkgs.sh -p imx708_kernel_driver
+./install_pivariety_pkgs.sh -p 64mp_pi_hawk_eye_kernel_driver
 
 # Installation des libraries python
-pip install numpy==1.24.2 matplotlib==3.7.1 mplcursors==0.5.2 opencv-python-headless==4.7.0.72 pyqt5==5.15.2 pyserial==3.5b0
+pip install numpy==1.24.2 matplotlib==3.7.1 mplcursors==0.5.2 opencv-python-headless==4.7.0.72 pyqt5==5.15.2 pyserial==3.5b0 picamera2==0.3.6 
 
 # Suppression du dossier tmp
 cd ..
