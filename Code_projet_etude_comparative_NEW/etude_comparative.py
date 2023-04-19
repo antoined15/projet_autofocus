@@ -14,7 +14,7 @@ from pantilt import Pantilt
 
 ########INPUTS################################################################################
 
-delta_pas_fin = 50
+delta_pas_fin = 100
 pas_focus = 50
 pas_focus_fin = 5
 nbre_image_moy_mesure = 2 #chaque résultat de mesure est la moyenne de nbre_image_moy_mesure images
@@ -118,10 +118,12 @@ for pos_T in Position_tourelle:
 	best_mean_Y = best_mean_Y_by_pos[best_index]
 
 	data = list(zip(best_focus_by_pos,bestnbr_symbole_by_pos,best_angle_by_pos,best_box_by_pos,best_mean_X_by_pos,best_mean_Y_by_pos))
+	header = ["best_focus_by_pos","bestnbr_symbole_by_pos","best_angle_by_pos","best_box_by_pos","best_mean_X_by_pos","best_mean_Y_by_pos"]
 
 	# Save in csv
 	with open(f'data/symbole_step({pos_T[0]},{pos_T[1]}).csv','w', newline='', encoding="utf-8") as csv_file:
 		csv_writer = csv.writer(csv_file, delimiter=';', quotechar='"',quoting=csv.QUOTE_MINIMAL)
+		csv_writer.writerow(header)
 		csv_writer.writerows(data)
 
 	fig = plt.figure()
@@ -176,9 +178,11 @@ for pos_T in Position_tourelle:
 		posit_M,laplacian,canny,picture_entropy,corner_counter,picture_variability,sobel = fct.trie_liste(posit_M,laplacian,canny,picture_entropy,corner_counter,picture_variability,sobel)
 
 		data = list(zip(posit_M,laplacian,canny,picture_entropy,corner_counter,picture_variability,sobel))
+		header = ["pos_m","laplacian","canny","entropy","corner_counter","sobel"]
 
 		with open(f'data/method_step({pos_T[0]},{pos_T[1]}).csv','w', newline='', encoding="utf-8") as csv_file:
 			csv_writer = csv.writer(csv_file, delimiter=';', quotechar='"',quoting=csv.QUOTE_MINIMAL)
+			csv_writer.writerow(header)
 			csv_writer.writerows(data)
 
 		# Save in csv
