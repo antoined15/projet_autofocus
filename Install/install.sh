@@ -62,6 +62,12 @@ sudo apt update
 # Installation des libraries python
 pip install numpy==1.24.2 matplotlib==3.7.1 mplcursors==0.5.2 opencv-python-headless==4.7.0.72 pyqt5==5.15.2 pyserial==3.5b0 picamera2==0.3.6 
 
+# Pour eviter des problèmes (pas sur)
+pip uninstall opencv-python-headless -y
+pip install opencv-python --upgrade
+pip uninstall opencv-python
+pip install opencv-python-headless
+
 # Suppression du dossier tmp
 cd ..
 cp -R tmp/autofocus_git autofocus_git
