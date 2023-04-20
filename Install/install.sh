@@ -38,8 +38,6 @@ else
     echo "Arduino est installé sur ce système."
 fi
 
-
-
 # Copie des fichier pour arduino IDE
 if [ -d "/home/pi/Arduino" ]; then
     echo "Le dossier Arduino existe"
@@ -47,7 +45,7 @@ else
     mkdir /home/pi/Arduino
 fi
 
-cp -R autofocus_git/test_communication_tourelle/Arduino /home/pi/
+cp -R autofocus_git/Test/Tourelle/Arduino /home/pi/
 
 # Installation des drivers caméra
 chmod +x install_pivariety_pkgs.sh
@@ -60,7 +58,7 @@ sudo apt update
 ./install_pivariety_pkgs.sh -p 64mp_pi_hawk_eye_kernel_driver
 
 # Installation des libraries python
-pip install numpy==1.24.2 matplotlib==3.7.1 mplcursors==0.5.2 opencv-python-headless==4.7.0.72 pyqt5==5.15.2 pyserial==3.5b0 picamera2==0.3.6 
+pip install numpy==1.24.2 matplotlib==3.7.1 mplcursors==0.5.2 opencv-python-headless==4.7.0.72 pyqt5==5.15.2 pyserial==3.5b0 picamera2==0.3.6 argparse==1.4.0
 
 # Pour eviter des problèmes (pas sur)
 pip uninstall opencv-python-headless -y
