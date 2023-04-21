@@ -44,8 +44,8 @@ class Pantilt:
         return 1
 
     def init(self):
-        x = [0,100,0]
-        y = [0,100,13]
+        x = [0,180,90]
+        y = [0,90,13]
 
         for i in x:
             for j in y:

@@ -14,7 +14,7 @@ parser.add_argument("-o","--output-dir", type=str, default="image", help="Dossie
 args = parser.parse_args()
 
 Position_tourelle = [[90, 13], [90,45], [90,0], [90,30], [55,13], [125,13], [70,30], [110,30]] # [X° Y°]
-distance = 5
+distance = 3
 
 os.system("mkdir "+args.output_dir)
 

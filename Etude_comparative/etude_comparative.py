@@ -16,7 +16,7 @@ from pantilt import Pantilt
 color_frame = (0, 255, 0) #couleur du texte affiché sur l'image (vert)
 taille_text_frame = 0.5 #taille du texte affiché sur l'image
 
-Position_tourelle = [[0, 13], [15, 35], [0, 60]]#, [45, 45], [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
+Position_tourelle = [[90, 13], [105, 35], [90, 60]]#, [45, 45], [45, 90], [90, 90]]#[[posX1, posy1], [posX2, posY2], [posXn, posYn], [...]]
 
 ##############################################################################################
 
@@ -34,6 +34,9 @@ parser.add_argument("--fine-focus-step", type=int, default=5, help="Incrementati
 parser.add_argument("--img-mean", type=int, default=1,help="Nombre d'acquisition d'image moyenne")
 parser.add_argument("--fine-img-mean", type=int, default=5, help="Nombre d'acquisition d'images moyenne en mode fin")
 parser.add_argument("--delta-fine", type=int, default=50, help="Intervalle de pas du moteur mode fin autour de la position optimale")
+parser.add_argument("--width", type=int, default=1280, help="Largeur de l'image")
+parser.add_argument("--height", type=int, default=720, help="Hauteur de l'image")
+
 
 args = parser.parse_args()
 
@@ -54,9 +57,8 @@ else :
 
 if args.device == "64mp" or args.device == "16mp":
 	picam2 = Picamera2()
-	picam2.configure(picam2.create_preview_configuration(main={"format":'RGB888',"size":(640,480)}))
-	#config = picam2.create_preview_configuration(main={"size":(1920,1080)},lores={"size":(100,100)}, display="main")
-	#picam2.configure(config)
+	#picam2.configure(picam2.create_preview_configuration(main={"format":"RGB888","size":(args.width,args.height)}, lores={"size":(800,600)}, display="lores"))
+	picam2.configure(picam2.create_preview_configuration(main={"format":"RGB888","size":(args.width,args.height)}))
 	picam2.start()
 	focuser = Focuser("/dev/v4l-subdev1")
 	focuser.step = 0
